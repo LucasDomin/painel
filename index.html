@@ -31,7 +31,8 @@
   .container { max-width: 760px; margin: 0 auto; }
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; flex-wrap: wrap; gap: 8px; }
   .title { font-size: 20px; font-weight: 500; }
-  .day-badge { font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-lg); background: var(--info-bg); color: var(--info-text); border: 0.5px solid var(--info-border); }
+  .day-badge { font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-lg); background: var(--info-bg); color: var(--info-text); border: 0.5px solid var(--info-border); cursor: pointer; user-select: none; }
+  .day-badge.preview { background: var(--warn-bg); color: var(--warn-text); border-color: rgba(122,72,0,0.25); }
   .sync-bar { font-size: 12px; color: var(--text3); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; }
   .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); display: inline-block; flex-shrink: 0; }
   .sync-dot.ok { background: #4caf50; }
@@ -50,11 +51,24 @@
   .escala-name { font-size: 22px; font-weight: 500; }
   .escala-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
   .escala-week { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: .75rem; }
-  .escala-day { font-size: 12px; padding: 6px 8px; border-radius: var(--radius-md); border: 0.5px solid var(--border); text-align: center; background: var(--bg2); }
+  .escala-day {
+    font-size: 12px; padding: 6px 8px; border-radius: var(--radius-md);
+    border: 0.5px solid var(--border); text-align: center; background: var(--bg2);
+    cursor: pointer; transition: transform .1s, box-shadow .1s;
+  }
+  .escala-day:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
   .escala-day.today { background: var(--success-bg); border-color: var(--success-border); }
+  .escala-day.selected {
+    background: var(--info-bg); border-color: var(--info-border);
+    box-shadow: 0 0 0 2px var(--info-text);
+  }
+  .escala-day.today.selected {
+    background: var(--info-bg); border-color: var(--info-border);
+  }
   .d-name { font-weight: 500; font-size: 11px; color: var(--text2); }
   .d-person { font-size: 12px; font-weight: 500; color: var(--text); }
   .escala-day.today .d-name, .escala-day.today .d-person { color: var(--success-text); }
+  .escala-day.selected .d-name, .escala-day.selected .d-person { color: var(--info-text); }
   .divider { height: 0.5px; background: var(--border); margin: 1rem 0; }
   .update-area { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: .75rem; }
   .update-area h3 { font-size: 14px; font-weight: 500; margin-bottom: .75rem; }
@@ -82,17 +96,17 @@
 
   <div class="grid2">
     <div class="card">
-      <div class="card-title">Cartão de crédito — disponíveis hoje <span class="total-badge" id="cc-total">0</span></div>
+      <div class="card-title">Cartão de crédito — disponíveis <span id="cc-day-label">hoje</span> <span class="total-badge" id="cc-total">0</span></div>
       <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
     </div>
     <div class="card">
-      <div class="card-title">Empréstimo — disponíveis hoje <span class="total-badge" id="emp-total">0</span></div>
+      <div class="card-title">Empréstimo — disponíveis <span id="emp-day-label">hoje</span> <span class="total-badge" id="emp-total">0</span></div>
       <div class="tag-wrap" id="emp-tags"><span class="empty">Carregando...</span></div>
     </div>
   </div>
 
   <div class="escala-card">
-    <div class="card-title">Escala de empréstimo</div>
+    <div class="card-title">Escala de empréstimo <span style="font-size:11px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">— clique num dia para visualizar</span></div>
     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
       <span class="escala-name" id="hoje-pessoa">—</span>
       <span class="escala-sub" id="hoje-label">responsável hoje</span>
@@ -128,7 +142,6 @@
 </div>
 
 <script>
-// ── Firebase config ───────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyD_dbH5tloT-y29vrwo9UIjroz_MaxQgf0",
   authDomain: "paises-diarios.firebaseapp.com",
@@ -138,11 +151,9 @@ const firebaseConfig = {
   messagingSenderId: "700672649972",
   appId: "1:700672649972:web:5742060c25708b10a50ca1"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ── Dados ─────────────────────────────────────────────────
 const AVAIL = {
   BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'],
   US:['seg','ter','qua','qui','sex'], IN:['ter','qua','qui'],
@@ -164,8 +175,85 @@ const DEFAULTS  = {
 };
 
 let state = JSON.parse(JSON.stringify(DEFAULTS));
+let selectedDow = new Date().getDay(); // dia selecionado (começa com hoje)
 
-// ── Firebase listener ─────────────────────────────────────
+function getTodayDow() { return new Date().getDay(); }
+
+function parseList(str) {
+  return str.toUpperCase().split(/[\s,\-\/]+/).map(s=>s.trim()).filter(s=>s.length>=2&&s.length<=3);
+}
+
+function showNotice(id) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function renderTags() {
+  const dow = selectedDow;
+  const key = DAY_MAP[dow];
+  const todayDow = getTodayDow();
+  const isToday = dow === todayDow;
+  const labelText = isToday ? 'hoje' : (DAY_SHORT[dow] ? 'na ' + DAY_SHORT[dow] : '—');
+
+  document.getElementById('cc-day-label').textContent  = labelText;
+  document.getElementById('emp-day-label').textContent = labelText;
+
+  // badge
+  const badge = document.getElementById('day-badge');
+  badge.textContent = DAY_NAMES[dow] || 'Fim de semana';
+  badge.className = 'day-badge' + (isToday ? '' : ' preview');
+
+  const empList = parseList(state.emp);
+  const ccList  = parseList(state.cc);
+
+  function filterAvail(list) {
+    if (!key) return [];
+    return list.filter(c => AVAIL[c] && AVAIL[c].includes(key));
+  }
+  function renderTagList(ids, cls, cId, tId) {
+    const c = document.getElementById(cId), t = document.getElementById(tId);
+    t.textContent = ids.length;
+    c.innerHTML = ids.length
+      ? ids.map(id=>`<span class="tag ${cls}">${id}</span>`).join('')
+      : `<span class="empty">${key ? 'Nenhum país disponível' : 'Fim de semana — sem operações'}</span>`;
+  }
+  renderTagList(filterAvail(ccList),  'tag-cc',  'cc-tags',  'cc-total');
+  renderTagList(filterAvail(empList), 'tag-emp', 'emp-tags', 'emp-total');
+}
+
+function renderEscala() {
+  const todayDow = getTodayDow();
+  // pessoa do dia selecionado
+  const key = DAY_MAP[selectedDow];
+  document.getElementById('hoje-pessoa').textContent = (key && state.escala[selectedDow]) ? state.escala[selectedDow] : '—';
+  document.getElementById('hoje-label').textContent  = selectedDow === todayDow
+    ? 'responsável hoje'
+    : (DAY_SHORT[selectedDow] ? 'responsável na ' + DAY_SHORT[selectedDow] : '(fim de semana)');
+
+  const ew = document.getElementById('escala-week');
+  ew.innerHTML = '';
+  [1,2,3,4,5].forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'escala-day'
+      + (d === todayDow ? ' today' : '')
+      + (d === selectedDow ? ' selected' : '');
+    div.innerHTML = `<div class="d-name">${DAY_SHORT[d]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
+    div.onclick = () => {
+      selectedDow = d;
+      renderEscala();
+      renderTags();
+    };
+    ew.appendChild(div);
+  });
+}
+
+function renderAll() {
+  renderEscala();
+  renderTags();
+}
+
+// ── Firebase ──────────────────────────────────────────────
 db.ref('painel').on('value', snap => {
   const data = snap.val();
   if (data) {
@@ -186,61 +274,6 @@ async function save(patch) {
   try { await db.ref('painel').update(patch); } catch(e) { console.error(e); }
 }
 
-// ── Render ────────────────────────────────────────────────
-function parseList(str) {
-  return str.toUpperCase().split(/[\s,\-\/]+/).map(s=>s.trim()).filter(s=>s.length>=2&&s.length<=3);
-}
-function getTodayKey() {
-  const d = new Date().getDay();
-  return {key: DAY_MAP[d], dow: d};
-}
-function showNotice(id) {
-  const el = document.getElementById(id);
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3000);
-}
-function renderAll() {
-  const {key, dow} = getTodayKey();
-  document.getElementById('day-badge').textContent = DAY_NAMES[dow] || 'Fim de semana';
-  const empList = parseList(state.emp);
-  const ccList  = parseList(state.cc);
-  function filterAvail(list) {
-    if (!key) return [];
-    return list.filter(c => AVAIL[c] && AVAIL[c].includes(key));
-  }
-  function renderTags(ids, cls, cId, tId) {
-    const c = document.getElementById(cId), t = document.getElementById(tId);
-    t.textContent = ids.length;
-    c.innerHTML = ids.length
-      ? ids.map(id=>`<span class="tag ${cls}">${id}</span>`).join('')
-      : `<span class="empty">${key?'Nenhum país disponível hoje':'Fim de semana — sem operações'}</span>`;
-  }
-  renderTags(filterAvail(ccList),  'tag-cc',  'cc-tags',  'cc-total');
-  renderTags(filterAvail(empList), 'tag-emp', 'emp-tags', 'emp-total');
-  document.getElementById('hoje-pessoa').textContent = (key && state.escala[dow]) ? state.escala[dow] : '—';
-  document.getElementById('hoje-label').textContent  = key ? 'responsável hoje' : '(fim de semana)';
-  const ew = document.getElementById('escala-week');
-  ew.innerHTML = '';
-  [1,2,3,4,5].forEach(d => {
-    const div = document.createElement('div');
-    div.className = 'escala-day' + (d === dow ? ' today' : '');
-    div.innerHTML = `<div class="d-name">${DAY_SHORT[d]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
-    ew.appendChild(div);
-  });
-}
-function parseEscala(str) {
-  const map = {}, dmap = {'segunda':1,'terca':2,'terça':2,'quarta':3,'quinta':4,'sexta':5};
-  str.split('\n').forEach(line => {
-    const m = line.match(/^(\w+)[:\s]+(.+)/i);
-    if (m) {
-      const norm = m[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      const dk = dmap[norm];
-      if (dk) map[dk] = m[2].trim();
-    }
-  });
-  return Object.keys(map).length ? map : null;
-}
-
 // ── Botões ────────────────────────────────────────────────
 document.getElementById('btn-apply-dem').onclick = async function() {
   const e = document.getElementById('inp-emp').value.trim();
@@ -255,6 +288,20 @@ document.getElementById('btn-reset-dem').onclick = async function() {
   document.getElementById('inp-cc').value  = '';
   await save({emp: DEFAULTS.emp, cc: DEFAULTS.cc});
 };
+
+function parseEscala(str) {
+  const map = {}, dmap = {'segunda':1,'terca':2,'terça':2,'quarta':3,'quinta':4,'sexta':5};
+  str.split('\n').forEach(line => {
+    const m = line.match(/^(\w+)[:\s]+(.+)/i);
+    if (m) {
+      const norm = m[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const dk = dmap[norm];
+      if (dk) map[dk] = m[2].trim();
+    }
+  });
+  return Object.keys(map).length ? map : null;
+}
+
 document.getElementById('btn-apply-esc').onclick = async function() {
   const v = document.getElementById('inp-escala').value.trim();
   if (!v) return;
@@ -265,6 +312,12 @@ document.getElementById('btn-apply-esc').onclick = async function() {
 document.getElementById('btn-reset-esc').onclick = async function() {
   document.getElementById('inp-escala').value = '';
   await save({escala: DEFAULTS.escala});
+};
+
+// Clicar no badge volta para hoje
+document.getElementById('day-badge').onclick = function() {
+  selectedDow = getTodayDow();
+  renderAll();
 };
 </script>
 </body>
