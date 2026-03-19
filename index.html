@@ -226,4 +226,9 @@ function atualizarPainel(dados) {
 // Listener em tempo real
 db.ref('/').on('value', snapshot => {
   if(snapshot.exists()){
-    atualizarPainel
+    atualizarPainel(snapshot.val());
+  }
+});
+</script>
+</body>
+</html>
