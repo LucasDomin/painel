@@ -16,16 +16,19 @@
 }
 
 body { font-family:Arial; background:var(--bg3); padding:20px; }
-.container { max-width:800px; margin:auto; }
+.container { max-width:900px; margin:auto; }
 
 .header { display:flex; justify-content:space-between; margin-bottom:20px; }
 
 .card { background:#fff; padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px; }
 
-.tag { padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin:2px; display:inline-block; }
+.tag { padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin:2px; display:inline-block; position:relative; }
 .tag-cc { background:#e6f1fb; }
 .tag-emp { background:#eaf3de; }
 .done { background:#d4edda !important; }
+
+.tooltip { display:none; position:absolute; top:120%; left:50%; transform:translateX(-50%); background:#333; color:#fff; font-size:11px; padding:4px 6px; border-radius:4px; white-space:nowrap; z-index:10; }
+.tag:hover .tooltip { display:block; }
 
 .escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-top:10px; }
 .escala-day { background:#eee; padding:8px; text-align:center; cursor:pointer; border-radius:6px; }
@@ -45,12 +48,12 @@ body { font-family:Arial; background:var(--bg3); padding:20px; }
 </div>
 
 <div class="card">
-  <b>Cartão de crédito</b>
+  <b>Cartão de crédito — disponíveis hoje</b>
   <div id="cc-tags"></div>
 </div>
 
 <div class="card">
-  <b>Empréstimo</b>
+  <b>Empréstimo — disponíveis hoje</b>
   <div id="emp-tags"></div>
 </div>
 
@@ -65,17 +68,69 @@ body { font-family:Arial; background:var(--bg3); padding:20px; }
 </div>
 
 <script>
-const STORAGE_KEY = 'painel_v2';
+const STORAGE_KEY = 'painel_v3';
 
-const AVAIL = { BR:['seg','ter','qua','qui','sex'], US:['seg','ter','qua','qui','sex'], MX:['seg','qua','sex'], AR:['seg','qua','qui','sex'] };
+// Domínios por país
+const DOMAINS = {
+  BR:['vouquitar','cardfacil'],
+  NL:['dekredit'],
+  US:['gotallcards'],
+  IN:['wheresmycard'],
+  MX:['mejoresopciones','unum.mx'],
+  AU:['unum.au'],
+  TH:['batkredit'],
+  PH:['unum.ph'],
+  AR:['tarjetasargentinas','solicitecartao'],
+  CO:['tarjetaahora'],
+  CL:['unum.cl'],
+  PE:['unum.pe'],
+  DE:['dekreditkarte','unum.de'],
+  FR:['unum.fr'],
+  BE:['antivora'],
+  TR:['kredinow'],
+  VN:['ttdtm'],
+  GR:['athivor'],
+  ID:['unum.id'],
+  EG:['unum.eg'],
+  JP:['justgreatcards'],
+  AE:['moneycredithub']
+};
+
+// Disponibilidade por país e dia
+const AVAIL = {
+  BR:['seg','ter','qua','qui','sex'],
+  NL:['seg','qua','sex'],
+  US:['seg','ter','qua','qui','sex'],
+  IN:[],
+  MX:['seg','qua','sex'],
+  AU:['seg','ter','qui'],
+  TH:['seg','ter','qui'],
+  PH:['seg','qui','sex'],
+  AR:['seg','qua','qui','sex'],
+  CO:['seg','qua','qui','sex'],
+  CL:['seg','ter','qua','qui'],
+  PE:['seg','ter','qua','qui'],
+  DE:['seg','ter','qua','qui','sex'],
+  FR:['seg','ter','qua','qui','sex'],
+  BE:['seg','ter','qua','qui','sex'],
+  TR:['seg','qua','sex'],
+  VN:['seg','qua','sex'],
+  GR:['seg','ter','qui'],
+  ID:['seg','ter','qui'],
+  EG:['seg','ter','qui'],
+  JP:['seg','ter','qua','qui','sex'],
+  AE:['seg','ter','qua','qui','sex']
+};
 
 const DAY_MAP={0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
-const DAY_NAMES={1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
+const DAY_NAMES={1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira'};
 
 let state={
-  cc:'BR - US - MX - AR',
-  emp:'MX - AR - US',
-  escala:{1:'Luiza',2:'Lucas',3:'Léo',4:'Eduardo',5:'Pedro'},
+  cc:Object.keys(DOMAINS).join(' - '), // todos os países
+  emp:Object.keys(DOMAINS).join(' - '),
+  escala:{
+    1:'BR',2:'BR',3:'NL',4:'US',5:'IN',
+  },
   done:{'tag-cc':{},'tag-emp':{}},
   history:[]
 };
@@ -85,6 +140,7 @@ function load(){ const s=localStorage.getItem(STORAGE_KEY); if(s) state=JSON.par
 
 function parse(str){ return str.split(/[\s\-]+/).filter(Boolean); }
 
+// Render tags com tooltip de domínios
 function renderTags(list,cls,id){
   const el=document.getElementById(id);
   el.innerHTML='';
@@ -93,22 +149,18 @@ function renderTags(list,cls,id){
     tag.className=`tag ${cls} ${state.done[cls][c]?'done':''}`;
     tag.textContent=c;
 
+    const tt=document.createElement('span');
+    tt.className='tooltip';
+    tt.textContent = DOMAINS[c]?.join(' ') || '';
+    tag.appendChild(tt);
+
     tag.onclick=()=>{
       state.done[cls][c]=!state.done[cls][c];
-
-      state.history.unshift({
-        country:c,
-        cls,
-        done:state.done[cls][c],
-        date:new Date().toLocaleString()
-      });
-
+      state.history.unshift({country:c,cls,done:state.done[cls][c],date:new Date().toLocaleString()});
       if(state.history.length>100) state.history.pop();
-
       save();
       render();
     };
-
     el.appendChild(tag);
   });
 }
@@ -116,14 +168,11 @@ function renderTags(list,cls,id){
 function renderEscala(dow){
   const el=document.getElementById('escala-week');
   el.innerHTML='';
-
   [1,2,3,4,5].forEach(d=>{
     const div=document.createElement('div');
     div.className='escala-day'+(d===dow?' today':'');
     div.innerHTML=`${DAY_NAMES[d]}<br>${state.escala[d]}`;
-
     div.onclick=()=>handleDayClick(d);
-
     el.appendChild(div);
   });
 }
@@ -148,6 +197,10 @@ function renderPeople(dow){
     const t=document.createElement('span');
     t.className='tag tag-cc';
     t.textContent=c;
+    const tt=document.createElement('span');
+    tt.className='tooltip';
+    tt.textContent=DOMAINS[c]?.join(' ')||'';
+    t.appendChild(tt);
     div.appendChild(t);
   });
 
@@ -155,6 +208,10 @@ function renderPeople(dow){
     const t=document.createElement('span');
     t.className='tag tag-emp';
     t.textContent=c;
+    const tt=document.createElement('span');
+    tt.className='tooltip';
+    tt.textContent=DOMAINS[c]?.join(' ')||'';
+    t.appendChild(tt);
     div.appendChild(t);
   });
 
@@ -175,7 +232,6 @@ function handleDayClick(dow){
 
   const cc=parse(state.cc).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
   const emp=parse(state.emp).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
-
   renderTags(cc,'tag-cc','cc-tags');
   renderTags(emp,'tag-emp','emp-tags');
 }
@@ -183,7 +239,6 @@ function handleDayClick(dow){
 function render(){
   const today=new Date().getDay();
   const dow = today>=1 && today<=5 ? today : 1;
-
   handleDayClick(dow);
 }
 
