@@ -5,291 +5,190 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Campanhas</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
-
 <style>
-body { background:#efefec; font-family:Arial; padding:20px; }
-.card { background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; }
-.tag { padding:5px 10px; border-radius:6px; margin:3px; display:inline-block; cursor:pointer; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:#fff; --bg2:#f5f5f3; --bg3:#efefec;
+  --text:#1a1a18; --text2:#6b6b67;
+  --border:rgba(0,0,0,.12);
+  --info:#e6f1fb; --success:#eaf3de;
+}
+
+body { font-family:Arial; background:var(--bg3); padding:20px; }
+.container { max-width:800px; margin:auto; }
+
+.header { display:flex; justify-content:space-between; margin-bottom:20px; }
+
+.card { background:#fff; padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px; }
+
+.tag { padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin:2px; display:inline-block; }
 .tag-cc { background:#e6f1fb; }
 .tag-emp { background:#eaf3de; }
-.done { background:#4caf50 !important; color:#fff; }
-.user-card { background:#f5f5f5; padding:10px; border-radius:8px; margin-bottom:6px; }
+.done { background:#d4edda !important; }
+
+.escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-top:10px; }
+.escala-day { background:#eee; padding:8px; text-align:center; cursor:pointer; border-radius:6px; }
+.escala-day.today { background:var(--success); transform:scale(1.05); }
+
+.person-block { background:#f9f9f9; padding:8px; margin-top:8px; border-radius:6px; }
+.history { font-size:11px; margin-top:5px; color:#666; }
 </style>
 </head>
 
 <body>
+<div class="container">
 
-<h2>Painel de campanhas</h2>
-
-<div class="card">
-<h3>Cartão de crédito — disponíveis</h3>
-<div id="cc-tags"></div>
+<div class="header">
+  <h3>Painel</h3>
+  <span id="day-badge"></span>
 </div>
 
 <div class="card">
-<h3>Empréstimo — disponíveis</h3>
-<div id="emp-tags"></div>
+  <b>Cartão de crédito</b>
+  <div id="cc-tags"></div>
 </div>
 
 <div class="card">
-<h3>Escala de empréstimo</h3>
-<div id="escala"></div>
+  <b>Empréstimo</b>
+  <div id="emp-tags"></div>
 </div>
 
 <div class="card">
-<h3>Atualizar demandas</h3>
-
-<b>CC</b>
-<textarea id="inp-cc"></textarea>
-
-<b>EMP</b>
-<textarea id="inp-emp"></textarea>
-
-<br><br>
-<button onclick="saveDemand()">Salvar</button>
+  <b>Escala</b>
+  <div id="hoje-pessoa"></div>
+  <div class="escala-week" id="escala-week"></div>
 </div>
 
-<div class="card">
-<h3>Atualizar escala</h3>
-<textarea id="inp-escala"></textarea>
-<br><br>
-<button onclick="saveEscala()">Salvar escala</button>
-</div>
+<div id="people-block"></div>
 
-<div class="card">
-<h3>Equipe Crédito</h3>
-<div id="team-cc"></div>
-</div>
-
-<div class="card">
-<h3>Equipe Empréstimo</h3>
-<div id="team-emp"></div>
-</div>
-
-<div class="card">
-<h3>Histórico</h3>
-<div id="history"></div>
 </div>
 
 <script>
+const STORAGE_KEY = 'painel_v2';
 
-/* ================= FIREBASE ================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyD_dbH5tloT-y29vrwo9UIjroz_MaxQgf0",
-  authDomain: "paises-diarios.firebaseapp.com",
-  databaseURL: "https://paises-diarios-default-rtdb.firebaseio.com",
-  projectId: "paises-diarios"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const AVAIL = { BR:['seg','ter','qua','qui','sex'], US:['seg','ter','qua','qui','sex'], MX:['seg','qua','sex'], AR:['seg','qua','qui','sex'] };
 
-/* ================= BASE ================= */
+const DAY_MAP={0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
+const DAY_NAMES={1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
 
-const AVAIL = {
-BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'],
-US:['seg','ter','qua','qui','sex'], IN:['ter','qua','qui'],
-MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'],
-PH:['seg','qui','sex'], AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'],
-CL:['seg','ter','qua','qui'], PE:['seg','ter','qua','qui'],
-DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'],
-BE:['seg','ter','qua','qui','sex'], TR:['seg','qua','sex'], VN:['seg','qua','sex'],
-GR:['seg','ter','qui'], ID:['seg','ter','qui'], EG:['seg','ter','qui'],
-JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
+let state={
+  cc:'BR - US - MX - AR',
+  emp:'MX - AR - US',
+  escala:{1:'Luiza',2:'Lucas',3:'Léo',4:'Eduardo',5:'Pedro'},
+  done:{'tag-cc':{},'tag-emp':{}},
+  history:[]
 };
 
-const DOMAINS = {
-BR:['vouquitar','cardfacil'],
-NL:['dekredit'], US:['gotallcards'], IN:['wheresmycard'],
-MX:['mejoresopciones','unum.mx'], AU:['unum.au'], TH:['batkredit'],
-PH:['unum.ph'], AR:['tarjetasargentinas','solicitecartao'],
-CO:['tarjetaahora'], CL:['unum.cl'], PE:['unum.pe'],
-DE:['dekreditkarte','unum.de'], FR:['unum.fr'],
-BE:['antivora'], TR:['kredinow'], VN:['ttdtm'],
-GR:['athivor'], ID:['unum.id'], EG:['unum.eg'],
-JP:['justgreatcards'], AE:['moneycredithub']
-};
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function load(){ const s=localStorage.getItem(STORAGE_KEY); if(s) state=JSON.parse(s); }
 
-/* ================= STATE ================= */
+function parse(str){ return str.split(/[\s\-]+/).filter(Boolean); }
 
-let state = { cc:'', emp:'', escala:{} };
-let done = {};
-let history = [];
-let selectedDay = new Date().getDay();
+function renderTags(list,cls,id){
+  const el=document.getElementById(id);
+  el.innerHTML='';
+  list.forEach(c=>{
+    const tag=document.createElement('span');
+    tag.className=`tag ${cls} ${state.done[cls][c]?'done':''}`;
+    tag.textContent=c;
 
-/* ================= HELPERS ================= */
+    tag.onclick=()=>{
+      state.done[cls][c]=!state.done[cls][c];
 
-function parse(str){
-return str.toUpperCase().split(/[\s,-]+/).filter(x=>x);
+      state.history.unshift({
+        country:c,
+        cls,
+        done:state.done[cls][c],
+        date:new Date().toLocaleString()
+      });
+
+      if(state.history.length>100) state.history.pop();
+
+      save();
+      render();
+    };
+
+    el.appendChild(tag);
+  });
 }
 
-function getKey(d){
-return ['','seg','ter','qua','qui','sex',''][d];
+function renderEscala(dow){
+  const el=document.getElementById('escala-week');
+  el.innerHTML='';
+
+  [1,2,3,4,5].forEach(d=>{
+    const div=document.createElement('div');
+    div.className='escala-day'+(d===dow?' today':'');
+    div.innerHTML=`${DAY_NAMES[d]}<br>${state.escala[d]}`;
+
+    div.onclick=()=>handleDayClick(d);
+
+    el.appendChild(div);
+  });
 }
 
-/* ================= RENDER ================= */
+function renderPeople(dow){
+  const block=document.getElementById('people-block');
+  block.innerHTML='';
+
+  const resp=state.escala[dow];
+
+  const cc=parse(state.cc).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
+  let emp=parse(state.emp).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
+
+  // remove empréstimo do responsável
+  if(resp) emp=[];
+
+  const div=document.createElement('div');
+  div.className='person-block';
+  div.innerHTML=`<b>${resp}</b>`;
+
+  cc.forEach(c=>{
+    const t=document.createElement('span');
+    t.className='tag tag-cc';
+    t.textContent=c;
+    div.appendChild(t);
+  });
+
+  emp.forEach(c=>{
+    const t=document.createElement('span');
+    t.className='tag tag-emp';
+    t.textContent=c;
+    div.appendChild(t);
+  });
+
+  const hist=document.createElement('div');
+  hist.className='history';
+  hist.innerHTML=state.history.slice(0,5).map(h=>`${h.country} (${h.date})`).join('<br>');
+
+  div.appendChild(hist);
+  block.appendChild(div);
+}
+
+function handleDayClick(dow){
+  document.getElementById('day-badge').textContent=DAY_NAMES[dow];
+  document.getElementById('hoje-pessoa').textContent=state.escala[dow];
+
+  renderEscala(dow);
+  renderPeople(dow);
+
+  const cc=parse(state.cc).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
+  const emp=parse(state.emp).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
+
+  renderTags(cc,'tag-cc','cc-tags');
+  renderTags(emp,'tag-emp','emp-tags');
+}
 
 function render(){
+  const today=new Date().getDay();
+  const dow = today>=1 && today<=5 ? today : 1;
 
-const key = getKey(selectedDay);
-
-let cc = parse(state.cc).filter(p=>AVAIL[p]?.includes(key));
-let emp = parse(state.emp).filter(p=>AVAIL[p]?.includes(key));
-
-/* REMOVE EMP DO CC */
-emp.forEach(p=>{
-cc = cc.filter(c=>c!==p);
-});
-
-/* TAGS */
-renderTags(cc,'cc-tags','tag-cc','cc');
-renderTags(emp,'emp-tags','tag-emp','emp');
-
-/* ESCALA */
-renderEscala();
-
-/* EQUIPES */
-renderTeams(cc,emp);
-
-/* HISTÓRICO */
-renderHistory();
+  handleDayClick(dow);
 }
 
-/* ================= TAGS ================= */
-
-function renderTags(list,id,cls,type){
-
-const el=document.getElementById(id);
-el.innerHTML='';
-
-list.forEach(p=>{
-const tag=document.createElement('span');
-tag.className='tag '+cls;
-
-if(done[type]?.[p]) tag.classList.add('done');
-
-tag.innerText=p;
-
-/* HOVER DOMÍNIO */
-tag.title = DOMAINS[p]?.join(' / ') || '';
-
-/* CLICK */
-tag.onclick=()=>{
-done[type]=done[type]||{};
-done[type][p]=!done[type][p];
-
-db.ref('done').set(done);
-addHistory(type,p);
-
+load();
 render();
-};
-
-el.appendChild(tag);
-});
-
-}
-
-/* ================= ESCALA ================= */
-
-function renderEscala(){
-const el=document.getElementById('escala');
-el.innerHTML='';
-
-['Seg','Ter','Qua','Qui','Sex'].forEach((d,i)=>{
-const div=document.createElement('div');
-div.className='tag';
-div.innerText=d+' - '+(state.escala[i+1]||'-');
-
-div.onclick=()=>{
-selectedDay = i+1;
-render();
-};
-
-el.appendChild(div);
-});
-}
-
-/* ================= EQUIPES ================= */
-
-function renderTeams(cc,emp){
-
-const creditTeam=['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
-const empTeam=['WALDIR','VICTOR'];
-
-/* REMOVE RESPONSÁVEL DO DIA DO CRÉDITO */
-const resp = state.escala[selectedDay];
-const creditFiltered = creditTeam.filter(n=>n!==resp);
-
-/* CRÉDITO */
-document.getElementById('team-cc').innerHTML =
-creditFiltered.map(n=>`
-<div class="user-card">
-<b>${n}</b><br>${cc.join(' ')}
-</div>`).join('');
-
-/* EMPRÉSTIMO */
-document.getElementById('team-emp').innerHTML =
-[...empTeam, resp].map(n=>`
-<div class="user-card">
-<b>${n||'-'}</b><br>${emp.join(' ')}
-</div>`).join('');
-
-}
-
-/* ================= HISTÓRICO ================= */
-
-function addHistory(type,p){
-const item={
-type,
-pais:p,
-time:new Date().toLocaleString()
-};
-
-history.push(item);
-db.ref('history').set(history);
-}
-
-function renderHistory(){
-document.getElementById('history').innerHTML =
-history.map(h=>`<div>${h.time} - ${h.type} - ${h.pais}</div>`).join('');
-}
-
-/* ================= SAVE ================= */
-
-function saveDemand(){
-state.cc=document.getElementById('inp-cc').value;
-state.emp=document.getElementById('inp-emp').value;
-db.ref('painel').set(state);
-}
-
-function saveEscala(){
-const lines=document.getElementById('inp-escala').value.split('\n');
-const esc={};
-
-lines.forEach(l=>{
-const [d,n]=l.split(':');
-if(d && n) esc[d.trim()]=n.trim();
-});
-
-state.escala=esc;
-db.ref('painel').set(state);
-}
-
-/* ================= FIREBASE ================= */
-
-db.ref('painel').on('value',snap=>{
-if(snap.val()){ state=snap.val(); render(); }
-});
-
-db.ref('done').on('value',snap=>{
-done=snap.val()||{}; render();
-});
-
-db.ref('history').on('value',snap=>{
-history=snap.val()||[]; render();
-});
-
 </script>
 
 </body>
