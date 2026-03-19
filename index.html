@@ -6,231 +6,263 @@
 <title>Painel de Campanhas — Crédito & Empréstimo</title>
 
 <!-- Firebase -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
   *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
-  body { font-family: Arial, sans-serif; background:#efefec; padding:20px; }
+  body { font-family:Arial,sans-serif; background:#efefec; padding:20px; }
   .container { max-width:900px; margin:auto; }
-
-  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-  .title { font-size:20px; font-weight:500; }
-  .day-badge { font-size:14px; padding:4px 12px; background:#e6f1fb; border-radius:8px; }
-
-  .cards-row { display:flex; gap:12px; margin-bottom:15px; }
-  .card { background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:10px; padding:15px; flex:1; }
-  .card b { display:block; margin-bottom:10px; }
-
-  .tag { display:inline-block; padding:4px 8px; margin:2px; border-radius:6px; cursor:pointer; background:#e6f1fb; position:relative; }
+  .header { display:flex; justify-content:space-between; margin-bottom:20px; }
+  .card { background:#fff; padding:15px; border-radius:10px; border:1px solid rgba(0,0,0,.12); margin-bottom:10px; display:inline-block; vertical-align:top; width:48%; }
+  .tag { padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin:2px; display:inline-block; }
+  .tag-cc { background:#e6f1fb; }
   .tag-emp { background:#eaf3de; }
   .done { background:#d4edda !important; }
-  .tooltip { display:none; position:absolute; top:120%; left:50%; transform:translateX(-50%); background:#333; color:#fff; font-size:11px; padding:4px 6px; border-radius:4px; white-space:nowrap; z-index:10; }
-  .tag:hover .tooltip { display:block; }
-
-  .escala-card { background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:10px; padding:15px; margin-bottom:15px; }
-  .escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:10px; }
-  .escala-day { background:#eee; padding:6px; text-align:center; border-radius:6px; cursor:pointer; }
-  .escala-day.today { background:#eaf3de; font-weight:bold; }
-
-  .update-area { background:#f5f5f3; border:1px solid rgba(0,0,0,.12); border-radius:10px; padding:15px; margin-bottom:15px; }
-  .update-area h3 { margin-bottom:10px; font-size:16px; }
-  textarea { width:100%; padding:8px; border-radius:6px; border:1px solid rgba(0,0,0,.2); margin-bottom:10px; }
-  button { padding:6px 12px; border-radius:6px; border:none; cursor:pointer; background:#e6f1fb; }
-
-  .person-block { background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:8px; padding:8px; margin-bottom:8px; }
+  .escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-top:10px; }
+  .escala-day { background:#eee; padding:8px; text-align:center; cursor:pointer; border-radius:6px; }
+  .escala-day.today { background:#eaf3de; transform:scale(1.05); }
+  .person-block { background:#f9f9f9; padding:8px; margin-top:8px; border-radius:6px; }
   .person-name { font-weight:600; margin-bottom:4px; }
-  .person-tags { display:flex; flex-wrap:wrap; gap:4px; }
-  .history { font-size:11px; color:#555; margin-top:4px; }
+  .history { font-size:11px; margin-top:5px; color:#666; }
+  .tooltip { position:absolute; background:#333; color:#fff; font-size:11px; padding:3px 6px; border-radius:4px; display:none; white-space:nowrap; z-index:10; }
 </style>
 </head>
+
 <body>
 <div class="container">
-  <div class="header">
-    <span class="title">Painel de campanhas</span>
-    <span class="day-badge" id="day-badge">—</span>
-  </div>
 
-  <!-- Disponíveis Hoje -->
-  <div class="cards-row">
-    <div class="card">
-      <b>Cartão de crédito — disponíveis hoje <span id="cc-total">0</span></b>
-      <div id="cc-tags"></div>
-    </div>
-    <div class="card">
-      <b>Empréstimo — disponíveis hoje <span id="emp-total">0</span></b>
-      <div id="emp-tags"></div>
-    </div>
-  </div>
+<div class="header">
+  <h2>Painel de Campanhas</h2>
+  <span id="day-badge"></span>
+</div>
 
-  <!-- Escala de Empréstimo -->
-  <div class="escala-card">
-    <b>Escala de empréstimo</b>
-    <div id="hoje-pessoa"></div>
-    <div class="escala-week" id="escala-week"></div>
-  </div>
+<!-- Disponíveis hoje lado a lado -->
+<div class="card">
+  <b>Cartão de Crédito — Disponíveis Hoje</b>
+  <div id="cc-tags"></div>
+</div>
+<div class="card">
+  <b>Empréstimo — Disponíveis Hoje</b>
+  <div id="emp-tags"></div>
+</div>
 
-  <!-- Atualizar demandas -->
-  <div class="update-area">
-    <h3>Atualizar demandas</h3>
-    <div><b>CC — lista de países</b></div>
-    <textarea id="inp-cc"></textarea>
-    <div><b>EMP — lista de países</b></div>
-    <textarea id="inp-emp"></textarea>
-    <button id="btn-apply-dem">Aplicar demandas</button>
-  </div>
+<!-- Escala -->
+<div class="card" style="width:100%">
+  <b>Escala de Empréstimo</b>
+  <div id="hoje-pessoa"></div>
+  <div class="escala-week" id="escala-week"></div>
+</div>
 
-  <!-- Atualizar escala -->
-  <div class="update-area">
-    <h3>Atualizar escala de empréstimo</h3>
-    <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Lucas&#10;Quarta: Léo&#10;Quinta: Ryan&#10;Sexta: Pedro"></textarea>
-    <button id="btn-apply-esc">Aplicar escala</button>
-  </div>
+<!-- Pessoas com demandas do dia -->
+<div id="people-block"></div>
 
-  <!-- Pessoas com demandas -->
-  <div id="people-block"></div>
+<!-- Atualizar demandas -->
+<div class="card" style="width:100%">
+  <h3>Atualizar demandas</h3>
+  <div>CC — lista de países</div>
+  <textarea id="inp-cc" rows="2"></textarea>
+  <div>EMP — lista de países</div>
+  <textarea id="inp-emp" rows="2"></textarea>
+  <button id="btn-apply-dem">Aplicar demandas</button>
+</div>
+
+<!-- Atualizar escala -->
+<div class="card" style="width:100%">
+  <h3>Atualizar escala de empréstimo</h3>
+  <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Lucas&#10;Quarta: Léo&#10;Quinta: Ryan&#10;Sexta: Pedro"></textarea>
+  <button id="btn-apply-esc">Aplicar escala</button>
+</div>
+
 </div>
 
 <script>
-  // FIREBASE (configuração pronta, sem precisar da key manual)
+  // === FIREBASE ===
   const firebaseConfig = {
-    apiKey: "AIzaSyDUMMY-KEY",
-    authDomain: "dummy.firebaseapp.com",
-    databaseURL: "https://dummy-default-rtdb.firebaseio.com",
-    projectId: "dummy",
+    apiKey: "DEFAULT_APIKEY",
+    authDomain: "DEFAULT_DOMAIN",
+    databaseURL: "https://realtime-painel-default-rtdb.firebaseio.com",
+    projectId: "DEFAULT_PROJECT",
+    storageBucket: "DEFAULT",
+    messagingSenderId: "DEFAULT",
+    appId: "DEFAULT_APPID"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  const DOMAIN_MAP = {
-    BR:['vouquitar','cardfacil'], NL:['dekredit'], US:['gotallcards'], IN:['wheresmycard'], MX:['mejoresopciones','unum.mx'],
-    AU:['unum.au'], TH:['batkredit'], PH:['unum.ph'], AR:['tarjetasargentinas','solicitecartao'], CO:['tarjetaahora'],
-    CL:['unum.cl'], PE:['unum.pe'], DE:['dekreditkarte','unum.de'], FR:['unum.fr'], BE:['antivora'], TR:['kredinow'],
-    VN:['ttdtm'], GR:['athivor'], ID:['unum.id'], EG:['unum.eg'], JP:['justgreatcards'], AE:['moneycredithub']
+  // === DOMÍNIOS ===
+  const DOMAINS = {
+    BR:['vouquitar','cardfacil'], NL:['dekredit'], US:['gotallcards'], IN:['wheresmycard'], 
+    MX:['mejoresopciones','unum.mx'], AU:['unum.au'], TH:['batkredit'], PH:['unum.ph'], 
+    AR:['tarjetasargentinas','solicitecartao'], CO:['tarjetaahora'], CL:['unum.cl'], 
+    PE:['unum.pe'], DE:['dekreditkarte','unum.de'], FR:['unum/fr'], BE:['antivora'], 
+    TR:['kredinow'], VN:['ttdtm'], GR:['athivor'], ID:['unum.id'], EG:['unum.eg'], 
+    JP:['justgreatcards'], AE:['moneycredithub']
   };
 
   const AVAIL = {
-    BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'], US:['seg','ter','qua','qui','sex'], IN:['ter','qua','qui'],
-    MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'], PH:['seg','qui','sex'],
-    AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'], CL:['seg','ter','qua','qui'], PE:['seg','ter','qua','qui'],
-    DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'], BE:['seg','ter','qua','qui','sex'],
-    TR:['seg','qua','sex'], VN:['seg','qua','sex'], GR:['seg','ter','qui'], ID:['seg','ter','qui'], EG:['seg','ter','qui'],
-    JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
+    BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'], US:['seg','ter','qua','qui','sex'],
+    IN:['ter','qua','qui'], MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'],
+    PH:['seg','qui','sex'], AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'], CL:['seg','ter','qua','qui'],
+    PE:['seg','ter','qua','qui'], DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'],
+    BE:['seg','ter','qua','qui','sex'], TR:['seg','qua','sex'], VN:['seg','qua','sex'], GR:['seg','ter','qui'],
+    ID:['seg','ter','qui'], EG:['seg','ter','qui'], JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
   };
 
-  const DAY_MAP={1:'seg',2:'ter',3:'qua',4:'qui',5:'sex'};
+  const DAY_MAP={0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
   const DAY_NAMES={1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira'};
 
-  const PEOPLE_CC=['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
-  const PEOPLE_EMP_BASE=['WALDIR','VICTOR'];
+  const PEOPLE_CC = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
+  const PEOPLE_EMP_BASE = ['WALDIR','VICTOR'];
 
-  let state = {cc:'BR AR US', emp:'MX AR US', escala:{1:'Luiza',2:'Lucas',3:'Léo',4:'Ryan',5:'Pedro'}, done:{cc:{},emp:{}}};
+  let state = {
+    cc:'BR AR MX US DE JP AU PH BE TH CO PE FR',
+    emp:'MX AR US AU PH CL GR CO AE PE',
+    escala:{1:'Luiza',2:'Lucas',3:'Léo',4:'Ryan',5:'Pedro'},
+    done:{cc:{},emp:{}}
+  };
 
-  const dbRef = db.ref('painel'); // Todos usam o mesmo nó
+  let selectedDow = 1;
 
-  // 🔹 Load inicial
-  dbRef.on('value', snapshot=>{
-    if(snapshot.exists()){
-      state = snapshot.val();
-      renderAll();
-    }
-  });
-
-  function parseList(str){ return str.toUpperCase().split(/[\s,-]+/).filter(Boolean); }
-
-  function renderTags(list,cls,containerId,totalId){
-    const container=document.getElementById(containerId);
-    const total=document.getElementById(totalId);
-    total.textContent=list.length;
+  // === RENDER ===
+  function renderTags(list,cls,containerId){
+    const container = document.getElementById(containerId);
     container.innerHTML='';
     list.forEach(c=>{
-      const doms=DOMAIN_MAP[c]?DOMAIN_MAP[c].join('/'):'';
-      const span=document.createElement('span');
-      span.className='tag '+cls+(state.done[cls][c]?' done':'');
-      span.textContent=c;
-      const tt=document.createElement('span');
-      tt.className='tooltip';
-      tt.textContent=doms;
-      span.appendChild(tt);
-      span.onclick=()=>{ state.done[cls][c]=!state.done[cls][c]; dbRef.set(state); renderAll(); };
-      container.appendChild(span);
+      const tag=document.createElement('span');
+      tag.className=`tag ${cls} ${state.done[cls][c]? 'done':''}`;
+      tag.textContent=c;
+      tag.onmouseover=(e)=>{
+        let tt = document.createElement('span');
+        tt.className='tooltip';
+        tt.textContent = (DOMAINS[c]||[]).join(' / ');
+        e.target.appendChild(tt);
+      };
+      tag.onmouseout=(e)=>{
+        const tt=e.target.querySelector('.tooltip');
+        if(tt) tt.remove();
+      };
+      tag.onclick=()=>{
+        state.done[cls][c]=!state.done[cls][c];
+        saveState();
+        renderDistribuicao();
+      };
+      container.appendChild(tag);
     });
   }
 
-  function renderEscala(dow){
-    const weekDiv=document.getElementById('escala-week');
-    weekDiv.innerHTML='';
+  function renderEscala(dow=null){
+    const el=document.getElementById('escala-week');
+    el.innerHTML='';
+    const day = dow || selectedDow;
     [1,2,3,4,5].forEach(d=>{
       const div=document.createElement('div');
-      div.className='escala-day'+(d===dow?' today':'');
-      div.textContent=DAY_NAMES[d]+'\n'+(state.escala[d]||'—');
-      div.onclick=()=>{ selectedDow=d; renderAll(); };
-      weekDiv.appendChild(div);
+      div.className='escala-day'+(d===day?' today':'');
+      div.innerHTML=DAY_NAMES[d]+'<br>'+(state.escala[d]||'—');
+      div.onclick=()=>{selectedDow=d; renderDistribuicao();}
+      el.appendChild(div);
     });
+    document.getElementById('hoje-pessoa').textContent=state.escala[day];
+  }
+
+  function renderDistribuicao(){
+    const dayKey=DAY_MAP[selectedDow];
+    document.getElementById('day-badge').textContent = DAY_NAMES[selectedDow];
+
+    const ccList = state.cc.split(' ').filter(c=>AVAIL[c]?.includes(dayKey));
+    const empList = state.emp.split(' ').filter(c=>AVAIL[c]?.includes(dayKey));
+
+    renderTags(ccList,'tag-cc','cc-tags');
+    renderTags(empList,'tag-emp','emp-tags');
+
+    renderEscala(selectedDow);
+    renderPeople(selectedDow);
   }
 
   function renderPeople(dow){
     const block=document.getElementById('people-block');
     block.innerHTML='';
+    const resp = state.escala[dow];
 
-    const resp=state.escala[dow];
-    const ccList=parseList(state.cc).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
-    let empList=parseList(state.emp).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
-    // remove responsável do dia do cartão de crédito
-    const empNames=PEOPLE_EMP_BASE.concat(resp&&!PEOPLE_EMP_BASE.includes(resp)?[resp]:[]);
-    const ccPeople=PEOPLE_CC.filter(p=>p!==resp);
+    const ccList = state.cc.split(' ').filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
+    let empList = state.emp.split(' ').filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
 
-    ccPeople.forEach(p=>{
-      const div=document.createElement('div'); div.className='person-block';
-      div.innerHTML='<div class="person-name">'+p+'</div>';
-      const tags=document.createElement('div'); tags.className='person-tags';
-      ccList.forEach(c=>{ const t=document.createElement('span'); t.className='tag tag-cc'; t.textContent=c; t.onclick=()=>{ state.done.cc[c]=!state.done.cc[c]; dbRef.set(state); renderAll(); }; tags.appendChild(t); });
-      div.appendChild(tags); block.appendChild(div);
+    // remove responsável do dia de empréstimo do CC
+    empList = empList.filter(c=>true); // mantém todos
+    let ccAvailable = ccList.filter(c=>!empList.includes(c));
+
+    PEOPLE_CC.forEach(name=>{
+      if(name===resp) ccAvailable=[]; // responsável do dia não faz CC
+      const div=document.createElement('div');
+      div.className='person-block';
+      const title=document.createElement('div');
+      title.className='person-name';
+      title.textContent=name;
+      div.appendChild(title);
+      ccAvailable.forEach(c=>{
+        const t=document.createElement('span');
+        t.className='tag tag-cc';
+        t.textContent=c;
+        t.onclick=()=>{
+          state.done.cc[c]=!state.done.cc[c];
+          saveState();
+          renderDistribuicao();
+        };
+        div.appendChild(t);
+      });
+      block.appendChild(div);
     });
 
-    empNames.forEach(p=>{
-      const div=document.createElement('div'); div.className='person-block';
-      div.innerHTML='<div class="person-name">'+p+'</div>';
-      const tags=document.createElement('div'); tags.className='person-tags';
-      empList.forEach(c=>{ const t=document.createElement('span'); t.className='tag tag-emp'; t.textContent=c; t.onclick=()=>{ state.done.emp[c]=!state.done.emp[c]; dbRef.set(state); renderAll(); }; tags.appendChild(t); });
-      div.appendChild(tags); block.appendChild(div);
+    let empPeople = PEOPLE_EMP_BASE.concat(resp && !PEOPLE_EMP_BASE.includes(resp) ? [resp] : []);
+    empPeople.forEach(name=>{
+      const div=document.createElement('div');
+      div.className='person-block';
+      const title=document.createElement('div');
+      title.className='person-name';
+      title.textContent=name;
+      div.appendChild(title);
+      empList.forEach(c=>{
+        const t=document.createElement('span');
+        t.className='tag tag-emp';
+        t.textContent=c;
+        t.onclick=()=>{
+          state.done.emp[c]=!state.done.emp[c];
+          saveState();
+          renderDistribuicao();
+        };
+        div.appendChild(t);
+      });
+      block.appendChild(div);
     });
   }
 
-  let selectedDow=(new Date().getDay()>=1 && new Date().getDay()<=5)?new Date().getDay():1;
-
-  function renderAll(){
-    const key=DAY_MAP[selectedDow];
-    document.getElementById('day-badge').textContent=DAY_NAMES[selectedDow]||'—';
-    const ccList=parseList(state.cc).filter(c=>AVAIL[c]?.includes(key));
-    const empList=parseList(state.emp).filter(c=>AVAIL[c]?.includes(key));
-    renderTags(ccList,'tag-cc','cc-tags','cc-total');
-    renderTags(empList,'tag-emp','emp-tags','emp-total');
-    document.getElementById('hoje-pessoa').textContent=state.escala[selectedDow];
-    renderEscala(selectedDow);
-    renderPeople(selectedDow);
-    document.getElementById('inp-cc').value=state.cc;
-    document.getElementById('inp-emp').value=state.emp;
-    document.getElementById('inp-escala').value=Object.entries(state.escala).map(([d,n])=>DAY_NAMES[d]+': '+n).join('\n');
+  // === SALVAR ESTADO NO FIREBASE ===
+  function saveState(){
+    db.ref('painel').set(state);
   }
 
-  // Aplicar demandas
+  // === CARREGAR ESTADO ===
+  db.ref('painel').on('value',snapshot=>{
+    if(snapshot.exists()) state = snapshot.val();
+    renderDistribuicao();
+  });
+
+  // === BOTÕES ===
   document.getElementById('btn-apply-dem').onclick=()=>{
-    const ccVal=document.getElementById('inp-cc').value.trim();
-    const empVal=document.getElementById('inp-emp').value.trim();
-    if(ccVal) state.cc=ccVal.toUpperCase();
-    if(empVal) state.emp=empVal.toUpperCase();
-    dbRef.set(state);
+    const c=document.getElementById('inp-cc').value.trim();
+    const e=document.getElementById('inp-emp').value.trim();
+    if(c) state.cc=c;
+    if(e) state.emp=e;
+    saveState();
+    renderDistribuicao();
   };
-
-  // Aplicar escala
   document.getElementById('btn-apply-esc').onclick=()=>{
     const val=document.getElementById('inp-escala').value.trim().split(/\n/);
-    [1,2,3,4,5].forEach((d,i)=>{ state.escala[d]=val[i]?.split(':')[1]?.trim()||state.escala[d]; });
-    dbRef.set(state);
+    [1,2,3,4,5].forEach((d,i)=>{ state.escala[d]=val[i]?val[i].split(':')[1]?.trim()||val[i].trim():state.escala[d]; });
+    saveState();
+    renderDistribuicao();
   };
 
-  renderAll();
 </script>
 </body>
 </html>
