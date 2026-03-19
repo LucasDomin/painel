@@ -34,9 +34,8 @@
       --success-bg: #173404; --success-text: #97c459; --success-border: rgba(151,196,89,0.25);
     }
   }
-
   body { background: var(--bg3); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; min-height: 100vh; padding: 2rem 1rem; }
-  .container { max-width: 760px; margin: 0 auto; }
+  .container { max-width: 900px; margin: 0 auto; }
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px; }
   .title { font-size: 20px; font-weight: 500; color: var(--text); }
   .day-badge { font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-lg); background: var(--info-bg); color: var(--info-text); border: 0.5px solid var(--info-border); }
@@ -48,12 +47,10 @@
   .tag { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-md); cursor: pointer; position: relative; }
   .tag-cc { background: #e6f1fb; color: #0c447c; }
   .tag-emp { background: #eaf3de; color: #27500a; }
-  .tag-selected { border: 2px solid green; }
-  .tooltip { display:none; position:absolute; top:110%; left:50%; transform:translateX(-50%); background:#0c447c; color:#fff; font-size:11px; padding:2px 6px; border-radius:4px; white-space:nowrap; z-index:10; }
-  .tag:hover .tooltip { display:block; }
-  .empty { font-size: 13px; color: var(--text3); font-style: italic; }
+  .tag-done { background: #d1f2c0 !important; color: #27500a !important; border: 1px solid #27500a; }
+  .tooltip { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: var(--bg); border: 0.5px solid var(--border); padding: 2px 6px; border-radius: var(--radius-md); font-size: 11px; white-space: nowrap; display: none; z-index: 10; }
   .escala-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
-  .escala-name { font-size: 22px; font-weight: 500; color: var(--text); }
+  .escala-name { font-size: 22px; font-weight: 500; color: var(--text); cursor: pointer; }
   .escala-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
   .escala-week { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: .75rem; }
   .escala-day { font-size: 12px; padding: 6px 8px; border-radius: var(--radius-md); border: 0.5px solid var(--border); text-align: center; background: var(--bg2); }
@@ -74,24 +71,24 @@
   button.primary { background: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
   .mt6 { margin-top: .75rem; }
 
-  /* Novo bloco de equipe */
-  .team-block { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; margin-bottom:1rem; }
-  .team-member { cursor:pointer; font-weight:500; margin-bottom:4px; }
-  .member-selected { color: var(--success-text); font-weight:600; }
-  .member-panel { margin-top:8px; padding:8px; border-top:1px solid var(--border); display:none; }
-  .member-panel.active { display:block; }
-  .history-log { font-size:12px; margin-top:6px; color:var(--text2); }
+  /* Equipe bloco */
+  .team-block { margin-top: 1rem; background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .team-block h4 { font-size: 14px; margin-bottom: .5rem; }
+  .team-member { font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 6px; border-radius: var(--radius-md); margin-bottom: 4px; background: var(--bg); border: 0.5px solid var(--border); }
+  .team-member:hover { background: var(--info-bg); color: var(--info-text); }
+  .member-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .history-log { font-size: 11px; margin-top: 4px; color: var(--text3); }
 </style>
 </head>
 <body>
 <div class="container">
-
-  <!-- Header e cards já existentes -->
+  <!-- Header -->
   <div class="header">
     <span class="title">Painel de campanhas</span>
     <span class="day-badge" id="day-badge">—</span>
   </div>
 
+  <!-- Cards de CC e EMP -->
   <div class="grid2">
     <div class="card">
       <div class="card-title">Cartão de crédito — disponíveis hoje <span class="total-badge" id="cc-total">0</span></div>
@@ -103,6 +100,7 @@
     </div>
   </div>
 
+  <!-- Escala de empréstimo -->
   <div class="escala-card">
     <div class="card-title">Escala de empréstimo</div>
     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
@@ -127,31 +125,31 @@
     </div>
   </div>
 
-  <!-- Novo bloco de equipe -->
-  <div class="team-block">
-    <h3>Equipe Crédito & Empréstimo — Hoje</h3>
-    <div id="team-list"></div>
-    <div id="member-panel-container"></div>
+  <!-- Bloco equipe -->
+  <div class="team-block" id="team-block">
+    <h4>Equipe de Crédito — Hoje</h4>
+    <div id="team-cc"></div>
+    <h4>Equipe de Empréstimo — Hoje</h4>
+    <div id="team-emp"></div>
   </div>
-
 </div>
 
 <script>
-// Dados
+/* --- Dados base --- */
 const AVAIL = {
-  BR:['seg','ter','qua','qui','sex','seg','ter','qua','qui','sex'],
+  BR:['seg','ter','qua','qui','sex'],
   NL:['seg','qua','sex'],
   US:['seg','ter','qua','qui','sex'],
-  IN:[],
-  MX:['seg','qua','sex','seg','qua','sex'],
+  IN:['ter','qua','qui'],
+  MX:['seg','qua','sex'],
   AU:['seg','ter','qui'],
   TH:['seg','ter','qui'],
   PH:['seg','qui','sex'],
-  AR:['seg','qua','qui','sex','seg','qua','qui','sex'],
+  AR:['seg','qua','qui','sex'],
   CO:['seg','qua','qui','sex'],
   CL:['seg','ter','qua','qui'],
   PE:['seg','ter','qua','qui'],
-  DE:['seg','ter','qua','qui','sex','seg','ter','qua','qui','sex'],
+  DE:['seg','ter','qua','qui','sex'],
   FR:['seg','ter','qua','qui','sex'],
   BE:['seg','ter','qua','qui','sex'],
   TR:['seg','qua','sex'],
@@ -162,30 +160,177 @@ const AVAIL = {
   JP:['seg','ter','qua','qui','sex'],
   AE:['seg','ter','qua','qui','sex']
 };
-const DOMAIN_MAP = {
-  BR:'vouquitar BR cardfacil', NL:'dekredit', US:'gotallcards', IN:'wheresmycard', MX:'mejoresopciones unum.mx',
-  AU:'unum.au', TH:'batkredit', PH:'unum.ph', AR:'tarjetasargentinas solicitecartao', CO:'tarjetaahora',
-  CL:'unum.cl', PE:'unum.pe', DE:'dekreditkarte unum.de', FR:'unum.fr', BE:'antivora', TR:'kredinow',
-  VN:'ttdtm', GR:'athivor', ID:'unum.id', EG:'unum.eg', JP:'justgreatcards', AE:'moneycredithub'
-};
-const DAY_MAP   = {0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
-const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira',0:'Domingo',6:'Sábado'};
-const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
 
+const DOMAINS = {
+  BR:['vouquitar','cardfacil'],
+  NL:['dekredit'],
+  US:['gotallcards'],
+  IN:['wheresmycard'],
+  MX:['mejoresopciones','unum.mx'],
+  AU:['unum.au'],
+  TH:['batkredit'],
+  PH:['unum.ph'],
+  AR:['tarjetasargentinas','solicitecartao'],
+  CO:['tarjetaahora'],
+  CL:['unum.cl'],
+  PE:['unum.pe'],
+  DE:['dekreditkarte','unum.de'],
+  FR:['unum.fr'],
+  BE:['antivora'],
+  TR:['kredinow'],
+  VN:['ttdtm'],
+  GR:['athivor'],
+  ID:['unum.id'],
+  EG:['unum.eg'],
+  JP:['justgreatcards'],
+  AE:['moneycredithub']
+};
+
+const CREDIT_TEAM = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO'];
+const LOAN_TEAM   = ['WALDIR','VICTOR'];
+
+/* --- Estado --- */
 let state = {
   emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
   cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR',
   escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Perereca',5:'Ryan'},
-  doneCC: {}, doneEMP: {}, history:{}
+  done: {} // histórico de cliques
 };
 
-const CREDIT_TEAM=['LUIZA','LUCAS','LÉO','RYAN','PEDRO'];
-const LOAN_TEAM=['WALDIR','VICTOR']; // + responsável do dia será adicionado dinamicamente
+/* --- Funções --- */
+const DAY_MAP   = {0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
+const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira',0:'Domingo',6:'Sábado'};
+const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
 
-// Resto do código existente (render tags, tooltip, clique para marcar, etc.)
-// + implementação do bloco de equipe
-// ... (por limitação aqui, o código detalhado do clique no nome, filtragem por país do dia e histórico será adicionado na sequência)
+function parseList(str){ return str.toUpperCase().split(/[\s,\-\/]+/).map(s=>s.trim()).filter(s=>s.length>=2&&s.length<=3); }
+function getTodayKey(){ const d = new Date().getDay(); return {key: DAY_MAP[d], dow: d}; }
 
+function renderTags(ids, cls, containerId, totalId) {
+  const c = document.getElementById(containerId);
+  const t = document.getElementById(totalId);
+  t.textContent = ids.length;
+  if(!ids.length){ c.innerHTML='<span class="empty">'+(getTodayKey().key?'Nenhum país disponível hoje':'Fim de semana — sem operações')+'</span>'; return; }
+  c.innerHTML = ids.map(id=>{
+    const tooltip = DOMAINS[id] ? DOMAINS[id].join(' / ') : '';
+    return `<span class="tag ${cls}" data-country="${id}" title="${tooltip}">${id}</span>`;
+  }).join('');
+}
+
+/* Render painel CC, EMP e escala */
+function renderAll(){
+  const {key,dow} = getTodayKey();
+  document.getElementById('day-badge').textContent = DAY_NAMES[dow] || 'Fim de semana';
+  
+  const empList = parseList(state.emp);
+  const ccList  = parseList(state.cc);
+
+  function filterAvail(list){ if(!key) return []; return list.filter(c => AVAIL[c] && AVAIL[c].includes(key)); }
+
+  renderTags(filterAvail(ccList),'tag-cc','cc-tags','cc-total');
+  renderTags(filterAvail(empList),'tag-emp','emp-tags','emp-total');
+
+  document.getElementById('hoje-pessoa').textContent = (key && state.escala[dow]) ? state.escala[dow] : '—';
+  document.getElementById('hoje-label').textContent  = key ? 'responsável hoje' : '(fim de semana)';
+
+  const ew = document.getElementById('escala-week');
+  ew.innerHTML = '';
+  [1,2,3,4,5].forEach(d=>{
+    const div = document.createElement('div');
+    div.className = 'escala-day'+(d===dow?' today':'');
+    div.innerHTML = `<div class="d-name">${DAY_SHORT[d]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
+    ew.appendChild(div);
+  });
+
+  renderTeam();
+}
+
+/* --- Equipe --- */
+function renderTeam(){
+  const {key} = getTodayKey();
+  if(!key) return;
+
+  // responsável do dia
+  const resp = state.escala[new Date().getDay()] || '';
+
+  // Crédito
+  const ccContainer = document.getElementById('team-cc');
+  ccContainer.innerHTML = '';
+  CREDIT_TEAM.forEach(name=>{
+    const div = document.createElement('div');
+    div.className='team-member';
+    div.textContent=name;
+    div.onclick = ()=> renderMemberTags(name,'cc');
+    ccContainer.appendChild(div);
+  });
+
+  // Empréstimo
+  const empContainer = document.getElementById('team-emp');
+  empContainer.innerHTML='';
+  const empTeam = LOAN_TEAM.concat(resp); // responsável do dia
+  empTeam.forEach(name=>{
+    const div = document.createElement('div');
+    div.className='team-member';
+    div.textContent=name;
+    div.onclick = ()=> renderMemberTags(name,'emp');
+    empContainer.appendChild(div);
+  });
+}
+
+/* --- Renderiza países do membro e histórico --- */
+function renderMemberTags(member,type){
+  const {key} = getTodayKey();
+  if(!key) return;
+
+  const ids = parseList(state[type]);
+  const avail = ids.filter(c=>AVAIL[c] && AVAIL[c].includes(key));
+
+  // cria container
+  let container = document.getElementById('member-tags-container');
+  if(!container){
+    container = document.createElement('div'); container.id='member-tags-container'; container.className='member-tags'; document.getElementById('team-block').appendChild(container);
+  }
+  container.innerHTML='';
+
+  avail.forEach(c=>{
+    const span = document.createElement('span');
+    span.className='tag tag-'+(type==='cc'?'cc':'emp');
+    if(state.done[member] && state.done[member].includes(c)) span.classList.add('tag-done');
+    span.textContent=c;
+    span.title=DOMAINS[c]?DOMAINS[c].join(' / '):'';
+    span.onclick = ()=>{
+      state.done[member]=state.done[member]||[];
+      if(!state.done[member].includes(c)) state.done[member].push(c);
+      renderMemberTags(member,type);
+      renderAll(); // atualizar cores na tag principal
+    };
+    container.appendChild(span);
+  });
+
+  // histórico
+  let hist = document.getElementById('member-history');
+  if(!hist){
+    hist=document.createElement('div'); hist.id='member-history'; hist.className='history-log'; document.getElementById('team-block').appendChild(hist);
+  }
+  hist.innerHTML='Histórico: '+(state.done[member]?state.done[member].join(', '):'Nenhum');
+}
+
+/* --- Botões aplicar/reset --- */
+document.getElementById('btn-apply-dem').onclick=function(){
+  const e = document.getElementById('inp-emp').value.trim();
+  const c = document.getElementById('inp-cc').value.trim();
+  if(e) state.emp=e;
+  if(c) state.cc=c;
+  renderAll();
+};
+document.getElementById('btn-reset-dem').onclick=function(){
+  state.emp = 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE';
+  state.cc  = 'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR';
+  document.getElementById('inp-emp').value='';
+  document.getElementById('inp-cc').value='';
+  renderAll();
+};
+
+renderAll();
 </script>
 </body>
 </html>
