@@ -3,69 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Campanhas</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<title>Painel de Campanhas — Crédito & Empréstimo</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefec;
-    --text: #1a1a18; --text2: #6b6b67; --text3: #a0a09c;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --info-bg: #e6f1fb; --info-text: #0c447c; --info-border: rgba(12,68,124,0.25);
-    --success-bg: #eaf3de; --success-text: #27500a; --success-border: rgba(39,80,10,0.25);
-    --warn-bg: #fff4e0; --warn-text: #7a4800; --warn-border: rgba(122,72,0,0.25);
-    --danger-bg: #fdecea; --danger-text: #8c1a11; --danger-border: rgba(140,26,17,0.2);
-    --radius-md: 8px; --radius-lg: 12px;
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efefec;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #a0a09c;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --info-bg: #e6f1fb;
+    --info-text: #0c447c;
+    --info-border: rgba(12,68,124,0.25);
+    --success-bg: #eaf3de;
+    --success-text: #27500a;
+    --success-border: rgba(39,80,10,0.25);
+    --radius-md: 8px;
+    --radius-lg: 12px;
     --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2c;
-      --text: #f0efe8; --text2: #9a9a94; --text3: #6a6a64;
-      --border: rgba(255,255,255,0.12); --border2: rgba(255,255,255,0.22);
-      --info-bg: #042c53; --info-text: #85b7eb; --info-border: rgba(133,183,235,0.25);
-      --success-bg: #173404; --success-text: #97c459; --success-border: rgba(151,196,89,0.25);
-      --warn-bg: #3a2200; --warn-text: #f5b942; --warn-border: rgba(245,185,66,0.25);
-      --danger-bg: #3b0f0a; --danger-text: #f08078; --danger-border: rgba(240,128,120,0.2);
-    }
   }
   body { background: var(--bg3); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; min-height: 100vh; padding: 2rem 1rem; }
   .container { max-width: 760px; margin: 0 auto; }
-  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; flex-wrap: wrap; gap: 8px; }
-  .title { font-size: 20px; font-weight: 500; }
-  .day-badge { font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-lg); background: var(--info-bg); color: var(--info-text); border: 0.5px solid var(--info-border); cursor: pointer; user-select: none; }
-  .day-badge.preview { background: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); }
-  .sync-bar { font-size: 12px; color: var(--text3); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; }
-  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); display: inline-block; flex-shrink: 0; }
-  .sync-dot.ok { background: #4caf50; }
-  .sync-dot.loading { background: var(--warn-text); animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px; }
+  .title { font-size: 20px; font-weight: 500; color: var(--text); }
+  .day-badge { font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-lg); background: var(--info-bg); color: var(--info-text); border: 0.5px solid var(--info-border); }
   .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 12px; margin-bottom: 1rem; }
   .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
-  .card-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .card-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; display: flex; align-items: center; gap: 6px; }
   .total-badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: var(--radius-md); background: var(--bg2); color: var(--text2); }
   .tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-md); }
+  .tag { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-md); cursor: pointer; }
   .tag-cc { background: #e6f1fb; color: #0c447c; }
   .tag-emp { background: #eaf3de; color: #27500a; }
+  .tag-selected { border: 1px solid #000; }
   .empty { font-size: 13px; color: var(--text3); font-style: italic; }
   .escala-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
-  .escala-name { font-size: 22px; font-weight: 500; }
+  .escala-name { font-size: 22px; font-weight: 500; color: var(--text); }
   .escala-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
   .escala-week { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: .75rem; }
-  .escala-day { font-size: 12px; padding: 6px 8px; border-radius: var(--radius-md); border: 0.5px solid var(--border); text-align: center; background: var(--bg2); cursor: pointer; transition: transform .1s, box-shadow .1s; }
-  .escala-day:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .escala-day { font-size: 12px; padding: 6px 8px; border-radius: var(--radius-md); border: 0.5px solid var(--border); text-align: center; background: var(--bg2); }
   .escala-day.today { background: var(--success-bg); border-color: var(--success-border); }
-  .escala-day.selected { background: var(--info-bg); border-color: var(--info-border); box-shadow: 0 0 0 2px var(--info-text); }
-  .escala-day.today.selected { background: var(--info-bg); border-color: var(--info-border); }
   .d-name { font-weight: 500; font-size: 11px; color: var(--text2); }
   .d-person { font-size: 12px; font-weight: 500; color: var(--text); }
-  .escala-day.today .d-name, .escala-day.today .d-person { color: var(--success-text); }
-  .escala-day.selected .d-name, .escala-day.selected .d-person { color: var(--info-text); }
   .divider { height: 0.5px; background: var(--border); margin: 1rem 0; }
   .update-area { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: .75rem; }
-  .update-area h3 { font-size: 14px; font-weight: 500; margin-bottom: .75rem; }
+  .update-area h3 { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: .75rem; }
   .section-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: .35rem; }
   textarea { width: 100%; font-size: 13px; padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius-md); background: var(--bg); color: var(--text); resize: vertical; font-family: var(--font); line-height: 1.5; }
   textarea:focus { outline: none; border-color: var(--info-text); }
@@ -73,19 +58,16 @@
   button { font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: var(--radius-md); border: 0.5px solid var(--border2); background: transparent; color: var(--text); cursor: pointer; font-family: var(--font); }
   button:hover { background: var(--bg3); }
   button.primary { background: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
-  button.danger { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
-  .notice { font-size: 12px; color: var(--success-text); background: var(--success-bg); border: 0.5px solid var(--success-border); border-radius: var(--radius-md); padding: 6px 10px; margin-top: .5rem; display: none; }
   .mt6 { margin-top: .75rem; }
-
-  /* Novo bloco interativo de usuários */
   .user-block { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
   .user-block h3 { font-size: 14px; font-weight: 500; margin-bottom: .75rem; }
-  .user-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 8px; }
+  .user-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 8px; }
   .user-card { background: var(--bg2); border-radius: var(--radius-md); padding: 8px; cursor: pointer; transition: background .15s; }
   .user-card:hover { background: var(--info-bg); }
   .user-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
   .user-card .tags { display: flex; flex-wrap: wrap; gap: 4px; }
   .user-card .tag { font-size: 11px; padding: 2px 6px; border-radius: var(--radius-md); cursor: pointer; background: #fff; border: 0.5px solid var(--border); }
+  .tag-clicked { border: 1px solid #000; }
 </style>
 </head>
 <body>
@@ -94,24 +76,20 @@
     <span class="title">Painel de campanhas</span>
     <span class="day-badge" id="day-badge">—</span>
   </div>
-  <div class="sync-bar">
-    <span class="sync-dot loading" id="sync-dot"></span>
-    <span id="sync-label">Conectando ao Firebase...</span>
-  </div>
 
   <div class="grid2">
     <div class="card">
-      <div class="card-title">Cartão de crédito — disponíveis <span id="cc-day-label">hoje</span> <span class="total-badge" id="cc-total">0</span></div>
+      <div class="card-title">Cartão de crédito — disponíveis hoje <span class="total-badge" id="cc-total">0</span></div>
       <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
     </div>
     <div class="card">
-      <div class="card-title">Empréstimo — disponíveis <span id="emp-day-label">hoje</span> <span class="total-badge" id="emp-total">0</span></div>
+      <div class="card-title">Empréstimo — disponíveis hoje <span class="total-badge" id="emp-total">0</span></div>
       <div class="tag-wrap" id="emp-tags"><span class="empty">Carregando...</span></div>
     </div>
   </div>
 
   <div class="escala-card">
-    <div class="card-title">Escala de empréstimo <span style="font-size:11px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">— clique num dia para visualizar</span></div>
+    <div class="card-title">Escala de empréstimo</div>
     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
       <span class="escala-name" id="hoje-pessoa">—</span>
       <span class="escala-sub" id="hoje-label">responsável hoje</span>
@@ -121,25 +99,24 @@
 
   <div class="divider"></div>
 
-  <!-- Atualizar demandas -->
   <div class="update-area">
     <h3>Atualizar demandas</h3>
     <div class="section-label">CC — lista de países</div>
-    <textarea id="inp-cc" rows="2"></textarea>
+    <textarea id="inp-cc" rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR"></textarea>
     <div class="section-label mt6">EMP — lista de países</div>
-    <textarea id="inp-emp" rows="2"></textarea>
+    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE"></textarea>
     <div class="btn-row">
       <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
       <button id="btn-reset-dem">Restaurar padrão</button>
     </div>
-    <div class="notice" id="notice-dem">✓ Demandas salvas e sincronizadas para todos!</div>
   </div>
 
-  <!-- Usuários interativos -->
+  <!-- Bloco de usuários com marcação -->
   <div class="user-block">
     <h3>💳 Demandas de Crédito — Hoje</h3>
     <div class="user-grid" id="users-cc"></div>
   </div>
+
   <div class="user-block">
     <h3>💰 Demandas de Empréstimo — Hoje</h3>
     <div class="user-grid" id="users-emp"></div>
@@ -147,88 +124,124 @@
 </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyD_dbH5tloT-y29vrwo9UIjroz_MaxQgf0",
-  authDomain: "paises-diarios.firebaseapp.com",
-  databaseURL: "https://paises-diarios-default-rtdb.firebaseio.com",
-  projectId: "paises-diarios",
-  storageBucket: "paises-diarios.appspot.com",
-  messagingSenderId: "700672649972",
-  appId: "1:700672649972:web:5742060c25708b10a50ca1"
+// Base de países disponíveis
+const AVAIL = {
+  BR:['seg','ter','qua','qui','sex'],
+  NL:['seg','qua','sex'],
+  US:['seg','ter','qua','qui','sex'],
+  MX:['seg','qua','sex'],
+  AU:['seg','ter','qui'],
+  PH:['seg','qui','sex'],
+  AR:['seg','qua','qui','sex'],
+  CO:['seg','qua','qui','sex'],
+  PE:['seg','ter','qua','qui'],
+  DE:['seg','ter','qua','qui','sex'],
+  FR:['seg','ter','qua','qui','sex'],
+  BE:['seg','ter','qua','qui','sex'],
+  JP:['seg','ter','qua','qui','sex'],
+  TR:['seg','qua','sex'],
+  VN:['seg','qua','sex'],
+  GR:['seg','ter','qui'],
+  AE:['seg','ter','qua','qui','sex']
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
-const syncDot = document.getElementById('sync-dot');
-const syncLabel = document.getElementById('sync-label');
+const DAY_MAP   = {0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
+const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira',0:'Domingo',6:'Sábado'};
+const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
 
-function atualizarPainel(dados) {
-  const ccTags = document.getElementById('cc-tags');
-  const ccTotal = document.getElementById('cc-total');
-  ccTags.innerHTML = '';
-  if(dados.cc && dados.cc.length){
-    dados.cc.forEach(p => {
-      const span = document.createElement('span');
-      span.className = 'tag tag-cc';
-      span.textContent = p;
-      ccTags.appendChild(span);
-    });
-    ccTotal.textContent = dados.cc.length;
-  } else {
-    ccTags.innerHTML = '<span class="empty">Nenhum disponível</span>';
-    ccTotal.textContent = 0;
-  }
+// Estado inicial
+let state = {
+  emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
+  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR',
+  escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Perereca',5:'Ryan'}
+};
 
-  const empTags = document.getElementById('emp-tags');
-  const empTotal = document.getElementById('emp-total');
-  empTags.innerHTML = '';
-  if(dados.emp && dados.emp.length){
-    dados.emp.forEach(p => {
-      const span = document.createElement('span');
-      span.className = 'tag tag-emp';
-      span.textContent = p;
-      empTags.appendChild(span);
-    });
-    empTotal.textContent = dados.emp.length;
-  } else {
-    empTags.innerHTML = '<span class="empty">Nenhum disponível</span>';
-    empTotal.textContent = 0;
-  }
+// Usuários fixos
+const usersCCList = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO'];
+const usersEMPList = ['WALDIR','VICTOR'];
 
-  // Usuários interativos
-  const usersCC = document.getElementById('users-cc');
-  usersCC.innerHTML = '';
-  if(dados.ccUsers && dados.ccUsers.length){
-    dados.ccUsers.forEach(u => {
-      const card = document.createElement('div');
-      card.className = 'user-card';
-      card.innerHTML = `<h4>${u.nome}</h4><div class="tags">${u.tags.map(t=>`<span class="tag tag-cc">${t}</span>`).join('')}</div>`;
-      usersCC.appendChild(card);
-    });
-  }
-
-  const usersEMP = document.getElementById('users-emp');
-  usersEMP.innerHTML = '';
-  if(dados.empUsers && dados.empUsers.length){
-    dados.empUsers.forEach(u => {
-      const card = document.createElement('div');
-      card.className = 'user-card';
-      card.innerHTML = `<h4>${u.nome}</h4><div class="tags">${u.tags.map(t=>`<span class="tag tag-emp">${t}</span>`).join('')}</div>`;
-      usersEMP.appendChild(card);
-    });
-  }
-
-  syncDot.classList.remove('loading');
-  syncDot.classList.add('ok');
-  syncLabel.textContent = 'Conectado ao Firebase';
+function parseList(str) {
+  return str.toUpperCase().split(/[\s,\-\/]+/).map(s=>s.trim()).filter(s=>s.length>=2&&s.length<=3);
 }
 
-// Listener em tempo real
-db.ref('/').on('value', snapshot => {
-  if(snapshot.exists()){
-    atualizarPainel(snapshot.val());
-  }
-});
+function getTodayKey() {
+  const d = new Date().getDay();
+  return {key: DAY_MAP[d], dow: d};
+}
+
+// Renderiza tags
+function renderTags(ids, cls) {
+  return ids.map(id=>`<span class="tag ${cls}">${id}</span>`).join('');
+}
+
+// Renderiza todo
+function renderAll() {
+  const {key, dow} = getTodayKey();
+  document.getElementById('day-badge').textContent = DAY_NAMES[dow] || 'Fim de semana';
+
+  const empList = parseList(state.emp);
+  const ccList  = parseList(state.cc);
+
+  const ccToday  = key ? ccList.filter(c => AVAIL[c]?.includes(key)) : [];
+  const empToday = key ? empList.filter(c => AVAIL[c]?.includes(key)) : [];
+
+  document.getElementById('cc-tags').innerHTML = ccToday.length ? renderTags(ccToday,'tag-cc') : '<span class="empty">Nenhum país disponível hoje</span>';
+  document.getElementById('cc-total').textContent = ccToday.length;
+
+  document.getElementById('emp-tags').innerHTML = empToday.length ? renderTags(empToday,'tag-emp') : '<span class="empty">Nenhum país disponível hoje</span>';
+  document.getElementById('emp-total').textContent = empToday.length;
+
+  document.getElementById('hoje-pessoa').textContent = state.escala[dow] || '—';
+  document.getElementById('hoje-label').textContent  = key ? 'responsável hoje' : '(fim de semana)';
+
+  const ew = document.getElementById('escala-week');
+  ew.innerHTML = '';
+  [1,2,3,4,5].forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'escala-day' + (d === dow ? ' today' : '');
+    div.innerHTML = `<div class="d-name">${DAY_SHORT[d]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
+    ew.appendChild(div);
+  });
+
+  // Renderiza usuários CC com países clicáveis
+  const ucc = document.getElementById('users-cc');
+  ucc.innerHTML = '';
+  usersCCList.forEach(u=>{
+    const div = document.createElement('div');
+    div.className = 'user-card';
+    div.innerHTML = `<h4>${u}</h4><div class="tags">${ccToday.map(p=>`<span class="tag tag-cc" onclick="this.classList.toggle('tag-clicked')">${p}</span>`).join('')}</div>`;
+    ucc.appendChild(div);
+  });
+
+  // Renderiza usuários EMP
+  const uemp = document.getElementById('users-emp');
+  uemp.innerHTML = '';
+  usersEMPList.concat(state.escala[dow]||[]).forEach(u=>{
+    const div = document.createElement('div');
+    div.className = 'user-card';
+    div.innerHTML = `<h4>${u}</h4><div class="tags">${empToday.map(p=>`<span class="tag tag-emp" onclick="this.classList.toggle('tag-clicked')">${p}</span>`).join('')}</div>`;
+    uemp.appendChild(div);
+  });
+}
+
+// Eventos de update
+document.getElementById('btn-apply-dem').onclick = function(){
+  const c = document.getElementById('inp-cc').value.trim();
+  const e = document.getElementById('inp-emp').value.trim();
+  if(c) state.cc = c;
+  if(e) state.emp = e;
+  renderAll();
+};
+
+document.getElementById('btn-reset-dem').onclick = function(){
+  state.cc = 'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR';
+  state.emp = 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE';
+  document.getElementById('inp-cc').value='';
+  document.getElementById('inp-emp').value='';
+  renderAll();
+};
+
+renderAll();
 </script>
 </body>
 </html>
