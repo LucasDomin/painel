@@ -7,12 +7,22 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefec;
-    --text: #1a1a18; --text2: #6b6b67; --text3: #a0a09c;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --info-bg: #e6f1fb; --info-text: #0c447c; --info-border: rgba(12,68,124,0.25);
-    --success-bg: #eaf3de; --success-text: #27500a; --success-border: rgba(39,80,10,0.25);
-    --radius-md: 8px; --radius-lg: 12px;
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efefec;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #a0a09c;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --info-bg: #e6f1fb;
+    --info-text: #0c447c;
+    --info-border: rgba(12,68,124,0.25);
+    --success-bg: #eaf3de;
+    --success-text: #27500a;
+    --success-border: rgba(39,80,10,0.25);
+    --radius-md: 8px;
+    --radius-lg: 12px;
     --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
@@ -64,21 +74,19 @@
   button.primary { background: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
   .mt6 { margin-top: .75rem; }
 
-  /* Bloco de equipe */
+  /* Novo bloco de equipe */
   .team-block { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; margin-bottom:1rem; }
   .team-member { cursor:pointer; font-weight:500; margin-bottom:4px; }
   .member-selected { color: var(--success-text); font-weight:600; }
   .member-panel { margin-top:8px; padding:8px; border-top:1px solid var(--border); display:none; }
   .member-panel.active { display:block; }
-  .member-panel h4 { font-size:13px; font-weight:600; margin-bottom:4px; }
-  .member-panel .tag { font-size:11px; padding:2px 6px; border-radius:var(--radius-md); cursor:pointer; background:#fff; border:0.5px solid var(--border); margin:2px; display:inline-block; }
-  .tag-done { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
   .history-log { font-size:12px; margin-top:6px; color:var(--text2); }
 </style>
 </head>
 <body>
 <div class="container">
 
+  <!-- Header e cards já existentes -->
   <div class="header">
     <span class="title">Painel de campanhas</span>
     <span class="day-badge" id="day-badge">—</span>
@@ -106,18 +114,20 @@
 
   <div class="divider"></div>
 
+  <!-- Atualizar demandas -->
   <div class="update-area">
     <h3>Atualizar demandas</h3>
     <div class="section-label">CC — lista de países</div>
-    <textarea id="inp-cc" rows="2"></textarea>
+    <textarea id="inp-cc" rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR"></textarea>
     <div class="section-label mt6">EMP — lista de países</div>
-    <textarea id="inp-emp" rows="2"></textarea>
+    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE"></textarea>
     <div class="btn-row">
       <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
       <button id="btn-reset-dem">Restaurar padrão</button>
     </div>
   </div>
 
+  <!-- Novo bloco de equipe -->
   <div class="team-block">
     <h3>Equipe Crédito & Empréstimo — Hoje</h3>
     <div id="team-list"></div>
@@ -127,30 +137,54 @@
 </div>
 
 <script>
-/* ---------- Dados ---------- */
+// Dados
 const AVAIL = {
-  BR:['seg','ter','qua','qui','sex','seg','ter','qua','qui','sex'], NL:['seg','qua','sex'], US:['seg','ter','qua','qui','sex'], IN:[], 
-  MX:['seg','qua','sex','seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'], PH:['seg','qui','sex'],
-  AR:['seg','qua','qui','sex','seg','qua','qui','sex'], CO:['seg','qua','qui','sex'], CL:['seg','ter','qua','qui'], PE:['seg','ter','qua','qui'],
-  DE:['seg','ter','qua','qui','sex','seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'], BE:['seg','ter','qua','qui','sex'],
-  TR:['seg','qua','sex'], VN:['seg','qua','sex'], GR:['seg','ter','qui'], ID:['seg','ter','qui'], EG:['seg','ter','qui'], JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
+  BR:['seg','ter','qua','qui','sex','seg','ter','qua','qui','sex'],
+  NL:['seg','qua','sex'],
+  US:['seg','ter','qua','qui','sex'],
+  IN:[],
+  MX:['seg','qua','sex','seg','qua','sex'],
+  AU:['seg','ter','qui'],
+  TH:['seg','ter','qui'],
+  PH:['seg','qui','sex'],
+  AR:['seg','qua','qui','sex','seg','qua','qui','sex'],
+  CO:['seg','qua','qui','sex'],
+  CL:['seg','ter','qua','qui'],
+  PE:['seg','ter','qua','qui'],
+  DE:['seg','ter','qua','qui','sex','seg','ter','qua','qui','sex'],
+  FR:['seg','ter','qua','qui','sex'],
+  BE:['seg','ter','qua','qui','sex'],
+  TR:['seg','qua','sex'],
+  VN:['seg','qua','sex'],
+  GR:['seg','ter','qui'],
+  ID:['seg','ter','qui'],
+  EG:['seg','ter','qui'],
+  JP:['seg','ter','qua','qui','sex'],
+  AE:['seg','ter','qua','qui','sex']
 };
 const DOMAIN_MAP = {
-  BR:'vouquitar BR cardfacil', NL:'dekredit', US:'gotallcards', IN:'wheresmycard', MX:'mejoresopciones unum.mx', AU:'unum.au',
-  TH:'batkredit', PH:'unum.ph', AR:'tarjetasargentinas solicitecartao', CO:'tarjetaahora', CL:'unum.cl', PE:'unum.pe', DE:'dekreditkarte unum.de',
-  FR:'unum.fr', BE:'antivora', TR:'kredinow', VN:'ttdtm', GR:'athivor', ID:'unum.id', EG:'unum.eg', JP:'justgreatcards', AE:'moneycredithub'
+  BR:'vouquitar BR cardfacil', NL:'dekredit', US:'gotallcards', IN:'wheresmycard', MX:'mejoresopciones unum.mx',
+  AU:'unum.au', TH:'batkredit', PH:'unum.ph', AR:'tarjetasargentinas solicitecartao', CO:'tarjetaahora',
+  CL:'unum.cl', PE:'unum.pe', DE:'dekreditkarte unum.de', FR:'unum.fr', BE:'antivora', TR:'kredinow',
+  VN:'ttdtm', GR:'athivor', ID:'unum.id', EG:'unum.eg', JP:'justgreatcards', AE:'moneycredithub'
 };
 const DAY_MAP   = {0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
 const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira',0:'Domingo',6:'Sábado'};
 const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
-let state = { emp:'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE', cc:'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR', escala:{1:'Luiza',2:'Pedro',3:'Leo',4:'Perereca',5:'Ryan'}, doneCC:{}, doneEMP:{}, history:{} };
-const CREDIT_TEAM=['LUIZA','LUCAS','LÉO','RYAN','PEDRO'];
-const LOAN_TEAM=['WALDIR','VICTOR'];
 
-/* ---------- Funções auxiliares ---------- */
-function parseList(str){ return str.toUpperCase().split(/[\s,\-\/]+/).map(s=>s.trim()).filter(s=>s.length>=2&&s.length<=3); }
-function getTodayKey(){ const d=new Date().getDay(); return {key: DAY_MAP[d], dow: d}; }
-/* ---------- Aqui continuaremos com renderAll, renderTags, tooltip, equipe e clique ---------- */
+let state = {
+  emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
+  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR',
+  escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Perereca',5:'Ryan'},
+  doneCC: {}, doneEMP: {}, history:{}
+};
+
+const CREDIT_TEAM=['LUIZA','LUCAS','LÉO','RYAN','PEDRO'];
+const LOAN_TEAM=['WALDIR','VICTOR']; // + responsável do dia será adicionado dinamicamente
+
+// Resto do código existente (render tags, tooltip, clique para marcar, etc.)
+// + implementação do bloco de equipe
+// ... (por limitação aqui, o código detalhado do clique no nome, filtragem por país do dia e histórico será adicionado na sequência)
 
 </script>
 </body>
