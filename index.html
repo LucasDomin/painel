@@ -35,10 +35,12 @@
   .card-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; display: flex; align-items: center; gap: 6px; }
   .total-badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: var(--radius-md); background: var(--bg2); color: var(--text2); }
   .tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-md); cursor: pointer; }
+  .tag { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-md); cursor: pointer; position: relative; }
   .tag-cc { background: #e6f1fb; color: #0c447c; }
   .tag-emp { background: #eaf3de; color: #27500a; }
-  .tag-selected { border: 1px solid #000; }
+  .tag-selected { background: #4CAF50; color: #fff; }
+  .tooltip { visibility:hidden; position:absolute; background:#333; color:#fff; padding:4px 6px; border-radius:4px; font-size:11px; top:-28px; left:50%; transform:translateX(-50%); white-space:nowrap; z-index:10; }
+  .tag:hover .tooltip { visibility: visible; }
   .empty { font-size: 13px; color: var(--text3); font-style: italic; }
   .escala-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
   .escala-name { font-size: 22px; font-weight: 500; color: var(--text); }
@@ -59,10 +61,176 @@
   button:hover { background: var(--bg3); }
   button.primary { background: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
   .mt6 { margin-top: .75rem; }
-  .user-block { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
-  .user-block h3 { font-size: 14px; font-weight: 500; margin-bottom: .75rem; }
-  .user-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 8px; }
-  .user-card { background: var(--bg2); border-radius: var(--radius-md); padding: 8px; cursor: pointer; transition: background .15s; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="title">Painel de campanhas</span>
+    <span class="day-badge" id="day-badge">—</span>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Cartão de crédito — disponíveis hoje <span class="total-badge" id="cc-total">0</span></div>
+      <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Empréstimo — disponíveis hoje <span class="total-badge" id="emp-total">0</span></div>
+      <div class="tag-wrap" id="emp-tags"><span class="empty">Carregando...</span></div>
+    </div>
+  </div>
+
+  <div class="escala-card">
+    <div class="card-title">Escala de empréstimo</div>
+    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <span class="escala-name" id="hoje-pessoa">—</span>
+      <span class="escala-sub" id="hoje-label">responsável hoje</span>
+    </div>
+    <div class="escala-week" id="escala-week"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="update-area">
+    <h3>Atualizar demandas</h3>
+    <div class="section-label">CC — lista de países</div>
+    <textarea id="inp-cc" rows="2"></textarea>
+    <div class="section-label mt6">EMP — lista de países</div>
+    <textarea id="inp-emp" rows="2"></textarea>
+    <div class="btn-row">
+      <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
+      <button id="btn-reset-dem">Restaurar padrão</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Lista de domínios por país (removendo .com e .com.br)
+const DOMAIN_MAP_RAW = {
+  BR:['vouquitar.com','cardfacil.com.br'],
+  NL:['dekredit.com'],
+  US:['gotallcards.com'],
+  IN:['wheresmycard.com'],
+  MX:['mejoresopciones.com','unum.mx'],
+  AU:['unum.au'],
+  TH:['batkredit.com'],
+  PH:['unum.ph'],
+  AR:['tarjetasargentinas.com','solicitecartao.com'],
+  CO:['tarjetaahora.com'],
+  CL:['unum.cl'],
+  PE:['unum.pe'],
+  DE:['dekreditkarte.com','unum.de'],
+  FR:['unum.fr'],
+  BE:['antivora.com'],
+  TR:['kredinow.com'],
+  VN:['ttdtm.com'],
+  GR:['athivor.com'],
+  ID:['unum.id'],
+  EG:['unum.eg'],
+  JP:['justgreatcards.com'],
+  AE:['moneycredithub.com']
+};
+
+// Remove .com/.com.br
+const DOMAIN_MAP = {};
+for(let c in DOMAIN_MAP_RAW){
+  DOMAIN_MAP[c] = DOMAIN_MAP_RAW[c].map(d=>d.replace(/\.com(\.br)?/,'')).join(' | ');
+}
+
+// Base de países disponíveis
+const AVAIL = {
+  BR:['seg','ter','qua','qui','sex'],
+  NL:['seg','qua','sex'],
+  US:['seg','ter','qua','qui','sex'],
+  MX:['seg','qua','sex'],
+  AU:['seg','ter','qui'],
+  PH:['seg','qui','sex'],
+  AR:['seg','qua','qui','sex'],
+  CO:['seg','qua','qui','sex'],
+  PE:['seg','ter','qua','qui'],
+  DE:['seg','ter','qua','qui','sex'],
+  FR:['seg','ter','qua','qui','sex'],
+  BE:['seg','ter','qua','qui','sex'],
+  JP:['seg','ter','qua','qui','sex'],
+  TR:['seg','qua','sex'],
+  VN:['seg','qua','sex'],
+  GR:['seg','ter','qui'],
+  AE:['seg','ter','qua','qui','sex']
+};
+
+const DAY_MAP   = {0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
+const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira',0:'Domingo',6:'Sábado'};
+const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
+let state = {
+  emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
+  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR',
+  escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Perereca',5:'Ryan'}
+};
+
+function parseList(str) {
+  return str.toUpperCase().split(/[\s,\-\/]+/).map(s=>s.trim()).filter(s=>s.length>=2&&s.length<=3);
+}
+
+function getTodayKey() {
+  const d = new Date().getDay();
+  return {key: DAY_MAP[d], dow: d};
+}
+
+// Renderiza tags com tooltip e clique verde
+function renderTagsWithTooltip(ids, cls){
+  return ids.map(id=>`<span class="tag ${cls}" onclick="this.classList.toggle('tag-selected')">${id}<span class="tooltip">${DOMAIN_MAP[id]||''}</span></span>`).join('');
+}
+
+// Render principal
+function renderAll(){
+  const {key, dow} = getTodayKey();
+  document.getElementById('day-badge').textContent = DAY_NAMES[dow] || 'Fim de semana';
+  const empList = parseList(state.emp);
+  const ccList  = parseList(state.cc);
+  const ccToday  = key ? ccList.filter(c => AVAIL[c]?.includes(key)) : [];
+  const empToday = key ? empList.filter(c => AVAIL[c]?.includes(key)) : [];
+
+  document.getElementById('cc-tags').innerHTML = ccToday.length ? renderTagsWithTooltip(ccToday,'tag-cc') : '<span class="empty">Nenhum país disponível hoje</span>';
+  document.getElementById('cc-total').textContent = ccToday.length;
+
+  document.getElementById('emp-tags').innerHTML = empToday.length ? renderTagsWithTooltip(empToday,'tag-emp') : '<span class="empty">Nenhum país disponível hoje</span>';
+  document.getElementById('emp-total').textContent = empToday.length;
+
+  document.getElementById('hoje-pessoa').textContent = state.escala[dow] || '—';
+  document.getElementById('hoje-label').textContent  = key ? 'responsável hoje' : '(fim de semana)';
+
+  const ew = document.getElementById('escala-week');
+  ew.innerHTML = '';
+  [1,2,3,4,5].forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'escala-day' + (d === dow ? ' today' : '');
+    div.innerHTML = `<div class="d-name">${DAY_SHORT[d]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
+    ew.appendChild(div);
+  });
+}
+
+// Eventos de update
+document.getElementById('btn-apply-dem').onclick = function(){
+  const c = document.getElementById('inp-cc').value.trim();
+  const e = document.getElementById('inp-emp').value.trim();
+  if(c) state.cc = c;
+  if(e) state.emp = e;
+  renderAll();
+};
+
+document.getElementById('btn-reset-dem').onclick = function(){
+  state.cc = 'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR';
+  state.emp = 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE';
+  document.getElementById('inp-cc').value='';
+  document.getElementById('inp-emp').value='';
+  renderAll();
+};
+
+renderAll();
+</script>
+</body>
+</html>  .user-card { background: var(--bg2); border-radius: var(--radius-md); padding: 8px; cursor: pointer; transition: background .15s; }
   .user-card:hover { background: var(--info-bg); }
   .user-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
   .user-card .tags { display: flex; flex-wrap: wrap; gap: 4px; }
