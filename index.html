@@ -3,144 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Campanhas</title>
-
+<title>Painel de Campanhas — Crédito & Empréstimo</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
 :root {
   --bg:#fff; --bg2:#f5f5f3; --bg3:#efefec;
   --text:#1a1a18; --text2:#6b6b67;
   --border:rgba(0,0,0,.12);
   --info:#e6f1fb; --success:#eaf3de;
 }
-
 body { font-family:Arial; background:var(--bg3); padding:20px; }
 .container { max-width:900px; margin:auto; }
-
 .header { display:flex; justify-content:space-between; margin-bottom:20px; }
-
 .card { background:#fff; padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px; }
-
 .tag { padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin:2px; display:inline-block; position:relative; }
-.tag-cc { background:#e6f1fb; }
-.tag-emp { background:#eaf3de; }
+.tag-cc { background:var(--info); }
+.tag-emp { background:var(--success); }
 .done { background:#d4edda !important; }
-
 .tooltip { display:none; position:absolute; top:120%; left:50%; transform:translateX(-50%); background:#333; color:#fff; font-size:11px; padding:4px 6px; border-radius:4px; white-space:nowrap; z-index:10; }
 .tag:hover .tooltip { display:block; }
-
 .escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-top:10px; }
 .escala-day { background:#eee; padding:8px; text-align:center; cursor:pointer; border-radius:6px; }
 .escala-day.today { background:var(--success); transform:scale(1.05); }
-
 .person-block { background:#f9f9f9; padding:8px; margin-top:8px; border-radius:6px; }
 .history { font-size:11px; margin-top:5px; color:#666; }
+.update-area { background:var(--bg2); border:0.5px solid var(--border); border-radius:10px; padding:10px; margin-bottom:10px; }
+.update-area h3 { font-size:14px; margin-bottom:8px; }
+.section-label { font-size:13px; font-weight:500; margin-bottom:4px; }
+textarea { width:100%; font-size:13px; padding:6px; border:0.5px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); resize:vertical; }
+button { font-size:13px; padding:6px 12px; border-radius:6px; border:0.5px solid var(--border); cursor:pointer; margin-right:5px; margin-top:5px; }
+button.primary { background:var(--info); border-color:var(--info); color:#0c447c; }
 </style>
 </head>
-
 <body>
 <div class="container">
 
 <div class="header">
-  <h3>Painel</h3>
+  <h3>Painel de Campanhas</h3>
   <span id="day-badge"></span>
 </div>
 
+<!-- Menu Atualizar Demandas -->
+<div class="update-area">
+  <h3>Atualizar demandas</h3>
+  <div class="section-label">CC — lista de países</div>
+  <textarea id="inp-cc" rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR"></textarea>
+  <div class="section-label">EMP — lista de países</div>
+  <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE"></textarea>
+  <div>
+    <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
+    <button id="btn-reset-dem">Restaurar padrão</button>
+  </div>
+</div>
+
+<!-- Escala da Semana -->
+<div class="update-area">
+  <h3>Atualizar escala de empréstimo</h3>
+  <div class="section-label">Segunda a sexta: Nome do responsável</div>
+  <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Lucas&#10;Quarta: Léo&#10;Quinta: Ryan&#10;Sexta: Pedro"></textarea>
+  <div>
+    <button class="primary" id="btn-apply-esc">Aplicar escala</button>
+    <button id="btn-reset-esc">Restaurar escala</button>
+  </div>
+</div>
+
+<!-- Blocos de pessoas para o dia -->
+<div id="people-block"></div>
+
+<!-- Cartões de Disponíveis Hoje -->
 <div class="card">
   <b>Cartão de crédito — disponíveis hoje</b>
   <div id="cc-tags"></div>
 </div>
-
 <div class="card">
   <b>Empréstimo — disponíveis hoje</b>
   <div id="emp-tags"></div>
 </div>
 
+<!-- Escala visual -->
 <div class="card">
   <b>Escala</b>
   <div id="hoje-pessoa"></div>
   <div class="escala-week" id="escala-week"></div>
 </div>
 
-<div id="people-block"></div>
-
 </div>
 
 <script>
-const STORAGE_KEY = 'painel_v3';
-
-// Domínios por país
-const DOMAINS = {
-  BR:['vouquitar','cardfacil'],
-  NL:['dekredit'],
-  US:['gotallcards'],
-  IN:['wheresmycard'],
-  MX:['mejoresopciones','unum.mx'],
-  AU:['unum.au'],
-  TH:['batkredit'],
-  PH:['unum.ph'],
-  AR:['tarjetasargentinas','solicitecartao'],
-  CO:['tarjetaahora'],
-  CL:['unum.cl'],
-  PE:['unum.pe'],
-  DE:['dekreditkarte','unum.de'],
-  FR:['unum.fr'],
-  BE:['antivora'],
-  TR:['kredinow'],
-  VN:['ttdtm'],
-  GR:['athivor'],
-  ID:['unum.id'],
-  EG:['unum.eg'],
-  JP:['justgreatcards'],
-  AE:['moneycredithub']
-};
-
-// Disponibilidade por país e dia
-const AVAIL = {
-  BR:['seg','ter','qua','qui','sex'],
-  NL:['seg','qua','sex'],
-  US:['seg','ter','qua','qui','sex'],
-  IN:[],
-  MX:['seg','qua','sex'],
-  AU:['seg','ter','qui'],
-  TH:['seg','ter','qui'],
-  PH:['seg','qui','sex'],
-  AR:['seg','qua','qui','sex'],
-  CO:['seg','qua','qui','sex'],
-  CL:['seg','ter','qua','qui'],
-  PE:['seg','ter','qua','qui'],
-  DE:['seg','ter','qua','qui','sex'],
-  FR:['seg','ter','qua','qui','sex'],
-  BE:['seg','ter','qua','qui','sex'],
-  TR:['seg','qua','sex'],
-  VN:['seg','qua','sex'],
-  GR:['seg','ter','qui'],
-  ID:['seg','ter','qui'],
-  EG:['seg','ter','qui'],
-  JP:['seg','ter','qua','qui','sex'],
-  AE:['seg','ter','qua','qui','sex']
-};
-
+const STORAGE_KEY='painel_v4';
+const DOMAINS={BR:['vouquitar','cardfacil'],NL:['dekredit'],US:['gotallcards'],IN:['wheresmycard'],MX:['mejoresopciones','unum.mx'],AU:['unum.au'],TH:['batkredit'],PH:['unum.ph'],AR:['tarjetasargentinas','solicitecartao'],CO:['tarjetaahora'],CL:['unum.cl'],PE:['unum.pe'],DE:['dekreditkarte','unum.de'],FR:['unum.fr'],BE:['antivora'],TR:['kredinow'],VN:['ttdtm'],GR:['athivor'],ID:['unum.id'],EG:['unum.eg'],JP:['justgreatcards'],AE:['moneycredithub']};
+const AVAIL={BR:['seg','ter','qua','qui','sex'],NL:['seg','qua','sex'],US:['seg','ter','qua','qui','sex'],IN:[],MX:['seg','qua','sex'],AU:['seg','ter','qui'],TH:['seg','ter','qui'],PH:['seg','qui','sex'],AR:['seg','qua','qui','sex'],CO:['seg','qua','qui','sex'],CL:['seg','ter','qua','qui'],PE:['seg','ter','qua','qui'],DE:['seg','ter','qua','qui','sex'],FR:['seg','ter','qua','qui','sex'],BE:['seg','ter','qua','qui','sex'],TR:['seg','qua','sex'],VN:['seg','qua','sex'],GR:['seg','ter','qui'],ID:['seg','ter','qui'],EG:['seg','ter','qui'],JP:['seg','ter','qua','qui','sex'],AE:['seg','ter','qua','qui','sex']};
 const DAY_MAP={0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
 const DAY_NAMES={1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira'};
+let state={cc:Object.keys(DOMAINS).join(' - '),emp:Object.keys(DOMAINS).join(' - '),escala:{1:'Luiza',2:'Lucas',3:'Léo',4:'Ryan',5:'Pedro'},done:{'tag-cc':{},'tag-emp':{}},history:[]};
 
-let state={
-  cc:Object.keys(DOMAINS).join(' - '), // todos os países
-  emp:Object.keys(DOMAINS).join(' - '),
-  escala:{
-    1:'BR',2:'BR',3:'NL',4:'US',5:'IN',
-  },
-  done:{'tag-cc':{},'tag-emp':{}},
-  history:[]
-};
-
-function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function save(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
 function load(){ const s=localStorage.getItem(STORAGE_KEY); if(s) state=JSON.parse(s); }
 
 function parse(str){ return str.split(/[\s\-]+/).filter(Boolean); }
 
-// Render tags com tooltip de domínios
 function renderTags(list,cls,id){
   const el=document.getElementById(id);
   el.innerHTML='';
@@ -148,22 +109,22 @@ function renderTags(list,cls,id){
     const tag=document.createElement('span');
     tag.className=`tag ${cls} ${state.done[cls][c]?'done':''}`;
     tag.textContent=c;
-
     const tt=document.createElement('span');
     tt.className='tooltip';
-    tt.textContent = DOMAINS[c]?.join(' ') || '';
+    tt.textContent=DOMAINS[c]?.join(' ')||'';
     tag.appendChild(tt);
-
     tag.onclick=()=>{
       state.done[cls][c]=!state.done[cls][c];
       state.history.unshift({country:c,cls,done:state.done[cls][c],date:new Date().toLocaleString()});
       if(state.history.length>100) state.history.pop();
       save();
-      render();
+      renderPeople(getToday());
     };
     el.appendChild(tag);
   });
 }
+
+function getToday(){ const d=new Date().getDay(); return (d>=1&&d<=5)?d:1; }
 
 function renderEscala(dow){
   const el=document.getElementById('escala-week');
@@ -172,7 +133,7 @@ function renderEscala(dow){
     const div=document.createElement('div');
     div.className='escala-day'+(d===dow?' today':'');
     div.innerHTML=`${DAY_NAMES[d]}<br>${state.escala[d]}`;
-    div.onclick=()=>handleDayClick(d);
+    div.onclick=()=>renderPeople(d);
     el.appendChild(div);
   });
 }
@@ -180,71 +141,86 @@ function renderEscala(dow){
 function renderPeople(dow){
   const block=document.getElementById('people-block');
   block.innerHTML='';
+  const respEmp=state.escala[dow];
 
-  const resp=state.escala[dow];
+  const ccList=parse(state.cc).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
+  let empList=parse(state.emp).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
 
-  const cc=parse(state.cc).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
-  let emp=parse(state.emp).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
+  // Exclusão cruzada: países do dia de EMP não aparecem no CC
+  const ccDisponivel=ccList.filter(c=>!empList.includes(c));
 
-  // remove empréstimo do responsável
-  if(resp) emp=[];
-
-  const div=document.createElement('div');
-  div.className='person-block';
-  div.innerHTML=`<b>${resp}</b>`;
-
-  cc.forEach(c=>{
-    const t=document.createElement('span');
-    t.className='tag tag-cc';
-    t.textContent=c;
-    const tt=document.createElement('span');
-    tt.className='tooltip';
-    tt.textContent=DOMAINS[c]?.join(' ')||'';
-    t.appendChild(tt);
-    div.appendChild(t);
+  // Bloco Crédito
+  const creditNames=['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
+  creditNames.forEach(name=>{
+    const div=document.createElement('div'); div.className='person-block';
+    div.innerHTML=`<b>${name}</b>`;
+    ccDisponivel.forEach(c=>{
+      const t=document.createElement('span');
+      t.className='tag tag-cc';
+      t.textContent=c;
+      const tt=document.createElement('span'); tt.className='tooltip';
+      tt.textContent=DOMAINS[c]?.join(' ')||''; t.appendChild(tt);
+      t.onclick=()=>{ t.classList.toggle('done'); state.done['tag-cc'][c]=t.classList.contains('done'); save(); };
+      div.appendChild(t);
+    });
+    block.appendChild(div);
   });
 
-  emp.forEach(c=>{
-    const t=document.createElement('span');
-    t.className='tag tag-emp';
-    t.textContent=c;
-    const tt=document.createElement('span');
-    tt.className='tooltip';
-    tt.textContent=DOMAINS[c]?.join(' ')||'';
-    t.appendChild(tt);
-    div.appendChild(t);
+  // Bloco Empréstimo
+  const loanNames=['WALDIR','VICTOR',respEmp];
+  loanNames.forEach(name=>{
+    if(!name) return;
+    const div=document.createElement('div'); div.className='person-block';
+    div.innerHTML=`<b>${name}</b>`;
+    empList.forEach(c=>{
+      const t=document.createElement('span');
+      t.className='tag tag-emp';
+      t.textContent=c;
+      const tt=document.createElement('span'); tt.className='tooltip';
+      tt.textContent=DOMAINS[c]?.join(' ')||''; t.appendChild(tt);
+      t.onclick=()=>{ t.classList.toggle('done'); state.done['tag-emp'][c]=t.classList.contains('done'); save(); };
+      div.appendChild(t);
+    });
+    block.appendChild(div);
   });
 
-  const hist=document.createElement('div');
-  hist.className='history';
-  hist.innerHTML=state.history.slice(0,5).map(h=>`${h.country} (${h.date})`).join('<br>');
-
-  div.appendChild(hist);
-  block.appendChild(div);
-}
-
-function handleDayClick(dow){
+  // Atualiza os cards de disponíveis hoje
+  renderTags(ccDisponivel,'tag-cc','cc-tags');
+  renderTags(empList,'tag-emp','emp-tags');
   document.getElementById('day-badge').textContent=DAY_NAMES[dow];
-  document.getElementById('hoje-pessoa').textContent=state.escala[dow];
-
+  document.getElementById('hoje-pessoa').textContent=respEmp;
   renderEscala(dow);
-  renderPeople(dow);
-
-  const cc=parse(state.cc).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
-  const emp=parse(state.emp).filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
-  renderTags(cc,'tag-cc','cc-tags');
-  renderTags(emp,'tag-emp','emp-tags');
 }
 
-function render(){
-  const today=new Date().getDay();
-  const dow = today>=1 && today<=5 ? today : 1;
-  handleDayClick(dow);
-}
+// Botões
+document.getElementById('btn-apply-dem').onclick=function(){
+  const c=document.getElementById('inp-cc').value.trim();
+  const e=document.getElementById('inp-emp').value.trim();
+  if(c) state.cc=c;
+  if(e) state.emp=e;
+  save();
+  renderPeople(getToday());
+};
+document.getElementById('btn-reset-dem').onclick=function(){
+  state.cc=Object.keys(DOMAINS).join(' - ');
+  state.emp=Object.keys(DOMAINS).join(' - ');
+  save();
+  renderPeople(getToday());
+};
+document.getElementById('btn-apply-esc').onclick=function(){
+  const val=document.getElementById('inp-escala').value.trim().split(/\n/);
+  [1,2,3,4,5].forEach((d,i)=>{ state.escala[d]=val[i]?val[i].split(':')[1]?.trim()||val[i].trim():state.escala[d]; });
+  save();
+  renderPeople(getToday());
+};
+document.getElementById('btn-reset-esc').onclick=function(){
+  state.escala={1:'Luiza',2:'Lucas',3:'Léo',4:'Ryan',5:'Pedro'};
+  save();
+  renderPeople(getToday());
+};
 
 load();
-render();
+renderPeople(getToday());
 </script>
-
 </body>
 </html>
