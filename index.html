@@ -3,65 +3,150 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Campanhas — Crédito & Empréstimo</title>
+<title>Painel de Campanhas</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
-:root {
-  --bg:#fff; --bg2:#f5f5f3; --bg3:#efefec;
-  --text:#1a1a18; --text2:#6b6b67;
-  --border:rgba(0,0,0,.12);
-  --info:#e6f1fb; --success:#eaf3de;
-}
-body { font-family:Arial; background:var(--bg3); padding:20px; }
+body { font-family:Arial; background:#efefec; padding:20px; }
 .container { max-width:900px; margin:auto; }
-.header { display:flex; justify-content:space-between; margin-bottom:20px; }
-.card { background:#fff; padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px; }
-.tag { padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin:2px; display:inline-block; position:relative; }
-.tag-cc { background:var(--info); }
-.tag-emp { background:var(--success); }
-.done { background:#d4edda !important; }
-.tooltip { display:none; position:absolute; top:120%; left:50%; transform:translateX(-50%); background:#333; color:#fff; font-size:11px; padding:4px 6px; border-radius:4px; white-space:nowrap; z-index:10; }
-.tag:hover .tooltip { display:block; }
-.escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-top:10px; }
-.escala-day { background:#eee; padding:8px; text-align:center; cursor:pointer; border-radius:6px; }
-.escala-day.today { background:var(--success); transform:scale(1.05); }
-.person-block { background:#f9f9f9; padding:8px; margin-top:8px; border-radius:6px; }
-.history { font-size:11px; margin-top:5px; color:#666; }
-.update-area { background:var(--bg2); border:0.5px solid var(--border); border-radius:10px; padding:10px; margin-bottom:10px; }
-.update-area h3 { font-size:14px; margin-bottom:8px; }
-.section-label { font-size:13px; font-weight:500; margin-bottom:4px; }
-textarea { width:100%; font-size:13px; padding:6px; border:0.5px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); resize:vertical; }
-button { font-size:13px; padding:6px 12px; border-radius:6px; border:0.5px solid var(--border); cursor:pointer; margin-right:5px; margin-top:5px; }
-button.primary { background:var(--info); border-color:var(--info); color:#0c447c; }
+
+.card { background:#fff; padding:15px; border-radius:10px; border:1px solid #ccc; margin-bottom:10px; }
+.section-label { font-weight:bold; margin-top:10px; display:block; }
+
+.clickable { cursor:pointer; padding:4px 8px; border-radius:6px; display:inline-block; margin:2px; transition:.15s; background:#e6f1fb; }
+.clickable:hover { transform:scale(1.05); }
+.clickable.selected { background:#d4edda; color:#27500a; }
+
+.dist-person { border:1px solid #ccc; border-radius:8px; padding:10px; margin-bottom:10px; }
+.dist-name { font-weight:bold; margin-bottom:6px; }
+
+.modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; }
+.modal-box { background:#fff; padding:20px; border-radius:12px; max-width:300px; }
 </style>
 </head>
+
 <body>
 <div class="container">
 
-<div class="header">
-  <h3>Painel de Campanhas</h3>
-  <span id="day-badge"></span>
+<!-- Atualizar demandas -->
+<div class="card">
+  <h3>Atualizar demandas</h3>
+  <span class="section-label">CC — lista de países</span>
+  <textarea id="inp-cc" rows="2">BR AR US IN MX AU TH PH NL PE CL DE FR BE TR VN GR ID EG JP AE</textarea>
+
+  <span class="section-label">EMP — lista de países</span>
+  <textarea id="inp-emp" rows="2">BR AR US IN MX AU TH PH NL PE CL DE FR BE TR VN GR ID EG JP AE</textarea>
+
+  <button onclick="applyDem()">Salvar demandas</button>
 </div>
 
-<!-- Menu Atualizar Demandas -->
-<div class="update-area">
-  <h3>Atualizar demandas</h3>
-  <div class="section-label">CC — lista de países</div>
-  <textarea id="inp-cc" rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR"></textarea>
-  <div class="section-label">EMP — lista de países</div>
-  <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE"></textarea>
-  <div>
-    <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
-    <button id="btn-reset-dem">Restaurar padrão</button>
+<!-- Distribuição do dia -->
+<div class="card">
+  <h3>Distribuição de demandas do dia</h3>
+  <div id="dist-cc"></div>
+  <hr>
+  <div id="dist-emp"></div>
+</div>
+
+</div>
+
+<!-- MODAL DOMÍNIOS -->
+<div id="domain-modal" class="modal">
+  <div class="modal-box">
+    <div id="modal-content"></div>
+    <br>
+    <button onclick="closeModal()">Fechar</button>
   </div>
 </div>
 
-<!-- Escala da Semana -->
-<div class="update-area">
-  <h3>Atualizar escala de empréstimo</h3>
-  <div class="section-label">Segunda a sexta: Nome do responsável</div>
-  <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Lucas&#10;Quarta: Léo&#10;Quinta: Ryan&#10;Sexta: Pedro"></textarea>
-  <div>
+<script>
+// DOMÍNIOS POR PAÍS
+const DOMAIN_MAP = {
+  BR:['vouquitar','cardfacil'], NL:['dekredit'], US:['gotallcards'], IN:['wheresmycard'],
+  MX:['mejoresopciones','unum.mx'], AU:['unum.au'], TH:['batkredit'], PH:['unum.ph'],
+  AR:['tarjetasargentinas','solicitecartao'], CO:['tarjetaahora'], CL:['unum.cl'], PE:['unum.pe'],
+  DE:['dekreditkarte','unum.de'], FR:['unum.fr'], BE:['antivora'], TR:['kredinow'], VN:['ttdtm'],
+  GR:['athivor'], ID:['unum.id'], EG:['unum.eg'], JP:['justgreatcards'], AE:['moneycredithub']
+};
+
+// PESSOAS
+const PEOPLE_CC = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
+const PEOPLE_EMP_BASE = ['WALDIR','VICTOR'];
+
+// DISPONIBILIDADE POR DIA
+const AVAIL = {
+  BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'], US:['seg','ter','qua','qui','sex'], IN:['ter','qua','qui'],
+  MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'], PH:['seg','qui','sex'],
+  AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'], CL:['seg','ter','qua','qui'], PE:['seg','ter','qua','qui'],
+  DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'], BE:['seg','ter','qua','qui','sex'],
+  TR:['seg','qua','sex'], VN:['seg','qua','sex'], GR:['seg','ter','qui'], ID:['seg','ter','qui'], EG:['seg','ter','qui'],
+  JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
+};
+
+// ESCALA
+let escala = {1:'Luiza',2:'Lucas',3:'Léo',4:'Ryan',5:'Pedro'};
+
+// ESTADO
+let state = { cc:'BR AR US IN MX AU TH PH NL PE CL DE FR BE TR VN GR ID EG JP AE',
+              emp:'BR AR US IN MX AU TH PH NL PE CL DE FR BE TR VN GR ID EG JP AE' };
+let selectedDow = new Date().getDay(); // 0=Domingo
+
+if(selectedDow===0 || selectedDow===6) selectedDow=1; // se fim de semana, mostra segunda
+
+function parseList(str){ return str.split(/[\s,-]+/).map(s=>s.trim()).filter(Boolean); }
+
+function applyDem(){
+  state.cc = document.getElementById('inp-cc').value;
+  state.emp = document.getElementById('inp-emp').value;
+  renderDistribuicao();
+}
+
+// RENDER DISTRIBUIÇÃO
+function renderDistribuicao(){
+  const key = ['seg','ter','qua','qui','sex'][selectedDow-1];
+
+  let ccList = parseList(state.cc).filter(c=>AVAIL[c]?.includes(key));
+  let empList = parseList(state.emp).filter(c=>AVAIL[c]?.includes(key));
+
+  // remover países EMP da lista CC
+  ccList = ccList.filter(c=>!empList.includes(c));
+
+  const responsavel = escala[selectedDow];
+
+  const peopleEmp = PEOPLE_EMP_BASE.concat(responsavel && !PEOPLE_EMP_BASE.includes(responsavel)?[responsavel]:[]);
+
+  renderGrupo('dist-cc', PEOPLE_CC, ccList);
+  renderGrupo('dist-emp', peopleEmp, empList);
+}
+
+// RENDER POR GRUPO
+function renderGrupo(id, pessoas, lista){
+  const el = document.getElementById(id);
+  el.innerHTML = pessoas.map(nome=>`
+    <div class="dist-person">
+      <div class="dist-name">${nome}</div>
+      ${lista.map(p=>`<span class="clickable" onclick="toggleTag(this,'${p}')">${p}</span>`).join(' ')}
+    </div>
+  `).join('');
+}
+
+// CLICK
+function toggleTag(el,pais){
+  el.classList.toggle('selected');
+  showDomains(pais);
+}
+
+// MODAL
+function showDomains(pais){
+  const doms = DOMAIN_MAP[pais] || [];
+  document.getElementById('modal-content').innerHTML = `<b>${pais}</b><br>${doms.map(d=>'• '+d).join('<br>')}`;
+  document.getElementById('domain-modal').style.display='flex';
+}
+function closeModal(){ document.getElementById('domain-modal').style.display='none'; }
+
+// INIT
+renderDistribuicao();
+</script>
+</body>
+</html>  <div>
     <button class="primary" id="btn-apply-esc">Aplicar escala</button>
     <button id="btn-reset-esc">Restaurar escala</button>
   </div>
