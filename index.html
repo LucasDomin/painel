@@ -3,266 +3,204 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Campanhas — Crédito & Empréstimo</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<title>Painel de Campanhas</title>
 
 <style>
   *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
-  body { font-family:Arial,sans-serif; background:#efefec; padding:20px; }
-  .container { max-width:900px; margin:auto; }
+  :root {
+    --bg:#fff; --bg2:#f5f5f3; --bg3:#efefec;
+    --text:#1a1a18; --text2:#6b6b67;
+    --border:rgba(0,0,0,.12); --border2:rgba(0,0,0,.22);
+    --success-bg:#eaf3de; --success-text:#27500a;
+    --info-bg:#e6f1fb; --info-text:#0c447c;
+    --radius-md:8px; --radius-lg:12px;
+    --font:Arial,sans-serif;
+  }
+  body { font-family: var(--font); background: var(--bg3); padding:20px; }
+  .container { max-width:800px; margin:auto; }
   .header { display:flex; justify-content:space-between; margin-bottom:20px; }
-  .card { background:#fff; padding:15px; border-radius:10px; border:1px solid rgba(0,0,0,.12); margin-bottom:10px; display:inline-block; vertical-align:top; width:48%; }
-  .tag { padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin:2px; display:inline-block; }
-  .tag-cc { background:#e6f1fb; }
-  .tag-emp { background:#eaf3de; }
-  .done { background:#d4edda !important; }
-  .escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-top:10px; }
-  .escala-day { background:#eee; padding:8px; text-align:center; cursor:pointer; border-radius:6px; }
-  .escala-day.today { background:#eaf3de; transform:scale(1.05); }
-  .person-block { background:#f9f9f9; padding:8px; margin-top:8px; border-radius:6px; }
-  .person-name { font-weight:600; margin-bottom:4px; }
-  .history { font-size:11px; margin-top:5px; color:#666; }
-  .tooltip { position:absolute; background:#333; color:#fff; font-size:11px; padding:3px 6px; border-radius:4px; display:none; white-space:nowrap; z-index:10; }
+  .day-badge { background:var(--info-bg); color:var(--info-text); padding:6px 12px; border-radius:var(--radius-lg); font-weight:500; }
+  .grid2 { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
+  .card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:15px; }
+  .card-title { font-weight:500; font-size:13px; margin-bottom:10px; color:var(--text2); display:flex; justify-content:space-between; align-items:center; }
+  .tag-wrap { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { font-size:12px; padding:4px 8px; border-radius:var(--radius-md); cursor:pointer; user-select:none; }
+  .tag-cc { background:var(--info-bg); color:var(--info-text); }
+  .tag-emp { background:var(--success-bg); color:var(--success-text); }
+  .tag.done { opacity:.5; text-decoration:line-through; }
+  .escala-card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:15px; margin-bottom:20px; }
+  .escala-name { font-size:20px; font-weight:500; }
+  .escala-sub { font-size:13px; color:var(--text2); }
+  .escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:10px; }
+  .escala-day { font-size:12px; padding:6px; border-radius:var(--radius-md); border:1px solid var(--border); text-align:center; background:var(--bg2); }
+  .escala-day.today { background:var(--success-bg); border-color:var(--success-text); color:var(--success-text); }
+  .update-area { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:15px; margin-bottom:20px; }
+  textarea { width:100%; padding:8px; border:1px solid var(--border2); border-radius:var(--radius-md); font-size:13px; font-family:var(--font); margin-bottom:10px; }
+  button { font-size:13px; padding:6px 12px; border-radius:var(--radius-md); border:1px solid var(--border2); background:transparent; cursor:pointer; }
+  button.primary { background:var(--info-bg); color:var(--info-text); border-color:var(--info-text); }
+  .notice { font-size:12px; color:var(--success-text); background:var(--success-bg); border:1px solid var(--success-text); border-radius:var(--radius-md); padding:6px 10px; display:none; margin-top:6px; }
 </style>
 </head>
-
 <body>
+
 <div class="container">
+  <div class="header">
+    <span style="font-weight:500;font-size:18px;">Painel de campanhas</span>
+    <span class="day-badge" id="day-badge">—</span>
+  </div>
 
-<div class="header">
-  <h2>Painel de Campanhas</h2>
-  <span id="day-badge"></span>
+  <!-- Tags disponíveis hoje -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Cartão de crédito — disponíveis hoje <span id="cc-total">0</span></div>
+      <div class="tag-wrap" id="cc-tags"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Empréstimo — disponíveis hoje <span id="emp-total">0</span></div>
+      <div class="tag-wrap" id="emp-tags"></div>
+    </div>
+  </div>
+
+  <!-- Escala -->
+  <div class="escala-card">
+    <div class="card-title">Escala de empréstimo</div>
+    <div><span class="escala-name" id="hoje-pessoa">—</span> <span class="escala-sub">responsável hoje</span></div>
+    <div class="escala-week" id="escala-week"></div>
+  </div>
+
+  <!-- Atualizar demandas -->
+  <div class="update-area">
+    <h3>Atualizar demandas</h3>
+    <div>EMP — lista de países</div>
+    <textarea id="inp-emp" placeholder="MX - AR - US"></textarea>
+    <div>CC — lista de países</div>
+    <textarea id="inp-cc" placeholder="BR - AR - MX"></textarea>
+    <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
+    <button id="btn-reset-dem">Restaurar padrão</button>
+    <div class="notice" id="notice-dem">✓ Demandas salvas e sincronizadas!</div>
+  </div>
+
+  <!-- Atualizar escala -->
+  <div class="update-area">
+    <h3>Atualizar escala</h3>
+    <textarea id="inp-escala" placeholder="Segunda: Luiza&#10;Terça: Pedro&#10;Quarta: Leo&#10;Quinta: Ryan&#10;Sexta: Eduardo"></textarea>
+    <button class="primary" id="btn-apply-esc">Aplicar escala</button>
+    <button id="btn-reset-esc">Restaurar escala</button>
+    <div class="notice" id="notice-esc">✓ Escala salva e sincronizada!</div>
+  </div>
 </div>
 
-<!-- Disponíveis hoje lado a lado -->
-<div class="card">
-  <b>Cartão de Crédito — Disponíveis Hoje</b>
-  <div id="cc-tags"></div>
-</div>
-<div class="card">
-  <b>Empréstimo — Disponíveis Hoje</b>
-  <div id="emp-tags"></div>
-</div>
-
-<!-- Escala -->
-<div class="card" style="width:100%">
-  <b>Escala de Empréstimo</b>
-  <div id="hoje-pessoa"></div>
-  <div class="escala-week" id="escala-week"></div>
-</div>
-
-<!-- Pessoas com demandas do dia -->
-<div id="people-block"></div>
-
-<!-- Atualizar demandas -->
-<div class="card" style="width:100%">
-  <h3>Atualizar demandas</h3>
-  <div>CC — lista de países</div>
-  <textarea id="inp-cc" rows="2"></textarea>
-  <div>EMP — lista de países</div>
-  <textarea id="inp-emp" rows="2"></textarea>
-  <button id="btn-apply-dem">Aplicar demandas</button>
-</div>
-
-<!-- Atualizar escala -->
-<div class="card" style="width:100%">
-  <h3>Atualizar escala de empréstimo</h3>
-  <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Lucas&#10;Quarta: Léo&#10;Quinta: Ryan&#10;Sexta: Pedro"></textarea>
-  <button id="btn-apply-esc">Aplicar escala</button>
-</div>
-
-</div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-  // === FIREBASE ===
-  const firebaseConfig = {
-    apiKey: "DEFAULT_APIKEY",
-    authDomain: "DEFAULT_DOMAIN",
-    databaseURL: "https://realtime-painel-default-rtdb.firebaseio.com",
-    projectId: "DEFAULT_PROJECT",
-    storageBucket: "DEFAULT",
-    messagingSenderId: "DEFAULT",
-    appId: "DEFAULT_APPID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+// ===== FIREBASE =====
+const firebaseConfig = {
+  apiKey: "xxx",
+  authDomain: "xxx",
+  databaseURL: "https://your-firebase.firebaseio.com",
+  projectId: "xxx",
+  storageBucket: "xxx",
+  messagingSenderId: "xxx",
+  appId: "xxx"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  // === DOMÍNIOS ===
-  const DOMAINS = {
-    BR:['vouquitar','cardfacil'], NL:['dekredit'], US:['gotallcards'], IN:['wheresmycard'], 
-    MX:['mejoresopciones','unum.mx'], AU:['unum.au'], TH:['batkredit'], PH:['unum.ph'], 
-    AR:['tarjetasargentinas','solicitecartao'], CO:['tarjetaahora'], CL:['unum.cl'], 
-    PE:['unum.pe'], DE:['dekreditkarte','unum.de'], FR:['unum/fr'], BE:['antivora'], 
-    TR:['kredinow'], VN:['ttdtm'], GR:['athivor'], ID:['unum.id'], EG:['unum.eg'], 
-    JP:['justgreatcards'], AE:['moneycredithub']
-  };
+// ===== DADOS =====
+const AVAIL = {
+  BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'],
+  US:['seg','ter','qua','qui','sex'], IN:['ter','qua','qui'],
+  MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'],
+  PH:['seg','qui','sex'], AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'],
+  CL:['seg','ter','qua','qui'], PE:['seg','ter','qua','qui'],
+  DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'],
+  BE:['seg','ter','qua','qui','sex'], TR:['seg','qua','sex'], VN:['seg','qua','sex'],
+  GR:['seg','ter','qui'], ID:['seg','ter','qui'], EG:['seg','ter','qui'],
+  JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
+};
 
-  const AVAIL = {
-    BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'], US:['seg','ter','qua','qui','sex'],
-    IN:['ter','qua','qui'], MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'],
-    PH:['seg','qui','sex'], AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'], CL:['seg','ter','qua','qui'],
-    PE:['seg','ter','qua','qui'], DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'],
-    BE:['seg','ter','qua','qui','sex'], TR:['seg','qua','sex'], VN:['seg','qua','sex'], GR:['seg','ter','qui'],
-    ID:['seg','ter','qui'], EG:['seg','ter','qui'], JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
-  };
+const DEFAULTS = {
+  emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
+  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR',
+  escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Ryan',5:'Eduardo'}
+};
 
-  const DAY_MAP={0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
-  const DAY_NAMES={1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira'};
+let state = JSON.parse(JSON.stringify(DEFAULTS));
 
-  const PEOPLE_CC = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
-  const PEOPLE_EMP_BASE = ['WALDIR','VICTOR'];
+function parseList(str){ return str.toUpperCase().split(/[\s,-]+/).filter(Boolean); }
+function getTodayKey(){ const d=new Date().getDay(); return {key: d>=1&&d<=5?['seg','ter','qua','qui','sex'][d-1]:null,dow:d}; }
 
-  let state = {
-    cc:'BR AR MX US DE JP AU PH BE TH CO PE FR',
-    emp:'MX AR US AU PH CL GR CO AE PE',
-    escala:{1:'Luiza',2:'Lucas',3:'Léo',4:'Ryan',5:'Pedro'},
-    done:{cc:{},emp:{}}
-  };
+function renderAll() {
+  const {key,dow} = getTodayKey();
+  document.getElementById('day-badge').textContent = dow>=1&&dow<=5 ? ['Segunda','Terça','Quarta','Quinta','Sexta'][dow-1] : 'Fim de semana';
 
-  let selectedDow = 1;
+  const ccList = parseList(state.cc).filter(c=>AVAIL[c]?.includes(key));
+  const empList = parseList(state.emp).filter(c=>AVAIL[c]?.includes(key));
 
-  // === RENDER ===
-  function renderTags(list,cls,containerId){
-    const container = document.getElementById(containerId);
-    container.innerHTML='';
-    list.forEach(c=>{
-      const tag=document.createElement('span');
-      tag.className=`tag ${cls} ${state.done[cls][c]? 'done':''}`;
-      tag.textContent=c;
-      tag.onmouseover=(e)=>{
-        let tt = document.createElement('span');
-        tt.className='tooltip';
-        tt.textContent = (DOMAINS[c]||[]).join(' / ');
-        e.target.appendChild(tt);
-      };
-      tag.onmouseout=(e)=>{
-        const tt=e.target.querySelector('.tooltip');
-        if(tt) tt.remove();
-      };
-      tag.onclick=()=>{
-        state.done[cls][c]=!state.done[cls][c];
-        saveState();
-        renderDistribuicao();
-      };
-      container.appendChild(tag);
-    });
-  }
+  document.getElementById('cc-tags').innerHTML = ccList.map(c=>`<span class="tag tag-cc">${c}</span>`).join('');
+  document.getElementById('emp-tags').innerHTML = empList.map(c=>`<span class="tag tag-emp">${c}</span>`).join('');
 
-  function renderEscala(dow=null){
-    const el=document.getElementById('escala-week');
-    el.innerHTML='';
-    const day = dow || selectedDow;
-    [1,2,3,4,5].forEach(d=>{
-      const div=document.createElement('div');
-      div.className='escala-day'+(d===day?' today':'');
-      div.innerHTML=DAY_NAMES[d]+'<br>'+(state.escala[d]||'—');
-      div.onclick=()=>{selectedDow=d; renderDistribuicao();}
-      el.appendChild(div);
-    });
-    document.getElementById('hoje-pessoa').textContent=state.escala[day];
-  }
+  document.getElementById('cc-total').textContent = ccList.length;
+  document.getElementById('emp-total').textContent = empList.length;
 
-  function renderDistribuicao(){
-    const dayKey=DAY_MAP[selectedDow];
-    document.getElementById('day-badge').textContent = DAY_NAMES[selectedDow];
+  document.getElementById('hoje-pessoa').textContent = state.escala[dow]||'—';
 
-    const ccList = state.cc.split(' ').filter(c=>AVAIL[c]?.includes(dayKey));
-    const empList = state.emp.split(' ').filter(c=>AVAIL[c]?.includes(dayKey));
-
-    renderTags(ccList,'tag-cc','cc-tags');
-    renderTags(empList,'tag-emp','emp-tags');
-
-    renderEscala(selectedDow);
-    renderPeople(selectedDow);
-  }
-
-  function renderPeople(dow){
-    const block=document.getElementById('people-block');
-    block.innerHTML='';
-    const resp = state.escala[dow];
-
-    const ccList = state.cc.split(' ').filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
-    let empList = state.emp.split(' ').filter(c=>AVAIL[c]?.includes(DAY_MAP[dow]));
-
-    // remove responsável do dia de empréstimo do CC
-    empList = empList.filter(c=>true); // mantém todos
-    let ccAvailable = ccList.filter(c=>!empList.includes(c));
-
-    PEOPLE_CC.forEach(name=>{
-      if(name===resp) ccAvailable=[]; // responsável do dia não faz CC
-      const div=document.createElement('div');
-      div.className='person-block';
-      const title=document.createElement('div');
-      title.className='person-name';
-      title.textContent=name;
-      div.appendChild(title);
-      ccAvailable.forEach(c=>{
-        const t=document.createElement('span');
-        t.className='tag tag-cc';
-        t.textContent=c;
-        t.onclick=()=>{
-          state.done.cc[c]=!state.done.cc[c];
-          saveState();
-          renderDistribuicao();
-        };
-        div.appendChild(t);
-      });
-      block.appendChild(div);
-    });
-
-    let empPeople = PEOPLE_EMP_BASE.concat(resp && !PEOPLE_EMP_BASE.includes(resp) ? [resp] : []);
-    empPeople.forEach(name=>{
-      const div=document.createElement('div');
-      div.className='person-block';
-      const title=document.createElement('div');
-      title.className='person-name';
-      title.textContent=name;
-      div.appendChild(title);
-      empList.forEach(c=>{
-        const t=document.createElement('span');
-        t.className='tag tag-emp';
-        t.textContent=c;
-        t.onclick=()=>{
-          state.done.emp[c]=!state.done.emp[c];
-          saveState();
-          renderDistribuicao();
-        };
-        div.appendChild(t);
-      });
-      block.appendChild(div);
-    });
-  }
-
-  // === SALVAR ESTADO NO FIREBASE ===
-  function saveState(){
-    db.ref('painel').set(state);
-  }
-
-  // === CARREGAR ESTADO ===
-  db.ref('painel').on('value',snapshot=>{
-    if(snapshot.exists()) state = snapshot.val();
-    renderDistribuicao();
+  const ew = document.getElementById('escala-week');
+  ew.innerHTML='';
+  [1,2,3,4,5].forEach(d=>{
+    const div = document.createElement('div');
+    div.className='escala-day'+(d===dow?' today':'');
+    div.innerHTML=`<div>${['Seg','Ter','Qua','Qui','Sex'][d-1]}</div><div>${state.escala[d]||'—'}</div>`;
+    ew.appendChild(div);
   });
+}
 
-  // === BOTÕES ===
-  document.getElementById('btn-apply-dem').onclick=()=>{
-    const c=document.getElementById('inp-cc').value.trim();
-    const e=document.getElementById('inp-emp').value.trim();
-    if(c) state.cc=c;
-    if(e) state.emp=e;
-    saveState();
-    renderDistribuicao();
-  };
-  document.getElementById('btn-apply-esc').onclick=()=>{
-    const val=document.getElementById('inp-escala').value.trim().split(/\n/);
-    [1,2,3,4,5].forEach((d,i)=>{ state.escala[d]=val[i]?val[i].split(':')[1]?.trim()||val[i].trim():state.escala[d]; });
-    saveState();
-    renderDistribuicao();
-  };
+// ===== FIREBASE SYNC =====
+function saveStateFirebase(){
+  db.ref('painel/state').set(state);
+}
 
+db.ref('painel/state').on('value', snapshot=>{
+  const val = snapshot.val();
+  if(val){ state = val; renderAll(); }
+});
+
+// ===== EVENTOS =====
+document.getElementById('btn-apply-dem').onclick = function(){
+  const e = document.getElementById('inp-emp').value.trim();
+  const c = document.getElementById('inp-cc').value.trim();
+  if(e) state.emp = e;
+  if(c) state.cc  = c;
+  renderAll(); saveStateFirebase();
+  document.getElementById('notice-dem').style.display='block';
+  setTimeout(()=>document.getElementById('notice-dem').style.display='none',3000);
+};
+
+document.getElementById('btn-reset-dem').onclick = function(){
+  state.emp=DEFAULTS.emp; state.cc=DEFAULTS.cc;
+  document.getElementById('inp-emp').value=''; document.getElementById('inp-cc').value='';
+  renderAll(); saveStateFirebase();
+};
+
+document.getElementById('btn-apply-esc').onclick = function(){
+  const v = document.getElementById('inp-escala').value.trim();
+  if(v){
+    v.split('\n').forEach((l,i)=>{ const day=i+1; if(l) state.escala[day]=l.trim(); });
+    renderAll(); saveStateFirebase();
+    document.getElementById('notice-esc').style.display='block';
+    setTimeout(()=>document.getElementById('notice-esc').style.display='none',3000);
+  }
+};
+
+document.getElementById('btn-reset-esc').onclick=function(){
+  state.escala=JSON.parse(JSON.stringify(DEFAULTS.escala));
+  document.getElementById('inp-escala').value='';
+  renderAll(); saveStateFirebase();
+};
+
+// INIT
+renderAll();
 </script>
 </body>
 </html>
