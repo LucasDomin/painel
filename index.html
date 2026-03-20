@@ -4,277 +4,163 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Campanhas</title>
-
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#fff;--bg2:#f5f5f3;--bg3:#efefec;--text:#1a1a18;--text2:#6b6b67;--border:rgba(0,0,0,.12);--info-bg:#e6f1fb;--info-text:#0c447c;--success-bg:#eaf3de;--success-text:#27500a;--radius-md:6px;--radius-lg:10px;--font:Arial, Helvetica, sans-serif;}
+  body{font-family:var(--font);background:var(--bg3);padding:20px;}
+  .container{max-width:900px;margin:auto;}
+  .header{display:flex;justify-content:space-between;margin-bottom:20px;}
+  .card{background:var(--bg);padding:15px;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:10px;}
+  .card-title{font-weight:bold;margin-bottom:8px;}
+  .tag{padding:4px 8px;border-radius:6px;margin:2px;display:inline-block;cursor:pointer;font-size:12px;}
+  .tag-cc{background:var(--info-bg);}
+  .tag-emp{background:var(--success-bg);}
+  .tag.selected{outline:2px solid #333;}
+  .escala-week{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:10px;}
+  .escala-day{background:#eee;padding:8px;text-align:center;border-radius:6px;cursor:pointer;}
+  .escala-day.today{background:var(--success-bg);transform:scale(1.05);}
+  .person-block{background:#f9f9f9;padding:8px;margin-top:8px;border-radius:6px;}
+  .history{font-size:11px;margin-top:5px;color:#666;}
+  .update-area{background:var(--bg2);padding:10px;margin-bottom:10px;border-radius:var(--radius-md);}
+  .tooltip{position:absolute;background:#fff;border:1px solid #ccc;padding:6px 8px;border-radius:6px;font-size:12px;display:none;z-index:10;white-space:nowrap;}
+  textarea{width:100%;padding:6px;border-radius:6px;margin-top:5px;margin-bottom:5px;font-family:var(--font);}
+  button{padding:6px 12px;margin-right:5px;border-radius:6px;cursor:pointer;}
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
-
-<style>
-*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
-:root {
-  --bg:#ffffff;--bg2:#f5f5f3;--bg3:#efefec;
-  --text:#1a1a18;--text2:#6b6b67;--text3:#a0a09c;
-  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
-  --info-bg:#e6f1fb;--info-text:#0c447c;--info-border:rgba(12,68,124,0.25);
-  --success-bg:#eaf3de;--success-text:#27500a;--success-border:rgba(39,80,10,0.25);
-  --warn-bg:#fff4e0;--warn-text:#7a4800;--warn-border:rgba(122,72,0,0.25);
-  --radius-md:8px;--radius-lg:12px;--font:'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2c;
-    --text:#f0efe8;--text2:#9a9a94;--text3:#6a6a64;
-    --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
-    --info-bg:#042c53;--info-text:#85b7eb;--info-border:rgba(133,183,235,0.25);
-    --success-bg:#173404;--success-text:#97c459;--success-border:rgba(151,196,89,0.25);
-    --warn-bg:#3a2200;--warn-text:#f5b942;--warn-border:rgba(245,185,66,0.25);
-  }
-}
-body { background: var(--bg3); color: var(--text); font-family: var(--font); font-size:15px; line-height:1.6; min-height:100vh; padding:2rem 1rem; }
-.container { max-width:760px; margin:0 auto; }
-.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:8px; }
-.title { font-size:20px; font-weight:500; }
-.day-badge { font-size:13px; font-weight:500; padding:6px 14px; border-radius:var(--radius-lg); background:var(--info-bg); color:var(--info-text); border:0.5px solid var(--info-border);}
-.sync-bar { font-size:12px; color:var(--text3); margin-bottom:1rem; display:flex; align-items:center; gap:6px; }
-.sync-dot { width:7px; height:7px; border-radius:50%; background:var(--text3); display:inline-block; }
-.sync-dot.ok { background:#4caf50; }
-.sync-dot.loading { background:var(--warn-text); animation:pulse 1s infinite; }
-@keyframes pulse {0%,100%{opacity:1}50%{opacity:.4}}
-.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem; }
-.card { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:1rem 1.25rem; }
-.card-title { font-size:12px; font-weight:500; color:var(--text2); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.75rem; display:flex; align-items:center; gap:6px; }
-.total-badge { font-size:11px; font-weight:500; padding:2px 8px; border-radius:var(--radius-md); background:var(--bg2); color:var(--text2); }
-.tag-wrap { display:flex; flex-wrap:wrap; gap:6px; }
-.tag { font-size:12px; font-weight:500; padding:4px 10px; border-radius:var(--radius-md); cursor:pointer; }
-.tag-cc { background:#e6f1fb; color:#0c447c; }
-.tag-emp { background:#eaf3de; color:#27500a; }
-.empty { font-size:13px; color:var(--text3); font-style:italic; }
-.escala-card { background: var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:1rem 1.25rem; margin-bottom:1rem; }
-.escala-name { font-size:22px; font-weight:500; }
-.escala-sub { font-size:13px; color:var(--text2); margin-top:2px; }
-.escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:.75rem; }
-.escala-day { font-size:12px; padding:6px 8px; border-radius:var(--radius-md); border:0.5px solid var(--border); text-align:center; background:var(--bg2); cursor:pointer; }
-.escala-day.today { background:var(--success-bg); border-color:var(--success-border); }
-.d-name { font-weight:500; font-size:11px; color:var(--text2); }
-.d-person { font-size:12px; font-weight:500; color:var(--text); }
-.escala-day.today .d-name, .escala-day.today .d-person { color:var(--success-text); }
-.divider { height:0.5px; background:var(--border); margin:1rem 0; }
-.update-area { background:var(--bg2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:1rem 1.25rem; margin-bottom:.75rem; }
-.update-area h3 { font-size:14px; font-weight:500; margin-bottom:.75rem; }
-.section-label { font-size:13px; font-weight:500; color:var(--text2); margin-bottom:.35rem; }
-textarea { width:100%; font-size:13px; padding:8px 10px; border:0.5px solid var(--border2); border-radius:var(--radius-md); background:var(--bg); color:var(--text); resize:vertical; font-family:var(--font); line-height:1.5; }
-textarea:focus { outline:none; border-color:var(--info-text); }
-.btn-row { display:flex; gap:8px; margin-top:.5rem; flex-wrap:wrap; }
-button { font-size:13px; font-weight:500; padding:7px 14px; border-radius:var(--radius-md); border:0.5px solid var(--border2); background:transparent; color:var(--text); cursor:pointer; font-family:var(--font); }
-button:hover { background:var(--bg3); }
-button.primary { background:var(--info-bg); color:var(--info-text); border-color:var(--info-border); }
-button:disabled { opacity:.5; cursor:not-allowed; }
-.mt6 { margin-top:.75rem; }
-.notice { font-size:12px; color:var(--warn-text); background:var(--warn-bg); border:0.5px solid var(--warn-border); border-radius:var(--radius-md); padding:6px 10px; margin-top:.5rem; display:none; }
-#tooltip { position:absolute; pointer-events:none; background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:6px 10px; font-size:12px; display:none; z-index:1000; }
-</style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <span class="title">Painel de campanhas</span>
-    <span class="day-badge" id="day-badge">—</span>
+    <h3>Painel de campanhas</h3>
+    <span id="day-badge">—</span>
   </div>
 
-  <div class="sync-bar">
-    <span class="sync-dot loading" id="sync-dot"></span>
-    <span id="sync-label">Carregando dados compartilhados...</span>
+  <div class="card">
+    <div class="card-title">Cartão de crédito — disponíveis hoje <span id="cc-total"></span></div>
+    <div id="cc-tags"></div>
   </div>
 
-  <div class="grid2">
-    <div class="card">
-      <div class="card-title">Cartão de crédito — disponíveis hoje <span class="total-badge" id="cc-total">0</span></div>
-      <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Empréstimo — disponíveis hoje <span class="total-badge" id="emp-total">0</span></div>
-      <div class="tag-wrap" id="emp-tags"><span class="empty">Carregando...</span></div>
-    </div>
+  <div class="card">
+    <div class="card-title">Empréstimo — disponíveis hoje <span id="emp-total"></span></div>
+    <div id="emp-tags"></div>
   </div>
 
-  <div class="escala-card">
+  <div class="card">
     <div class="card-title">Escala de empréstimo</div>
-    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
-      <span class="escala-name" id="hoje-pessoa">—</span>
-      <span class="escala-sub" id="hoje-label">responsável hoje</span>
-    </div>
+    <span id="hoje-pessoa">—</span>
     <div class="escala-week" id="escala-week"></div>
   </div>
 
-  <div class="divider"></div>
-
   <div class="update-area">
     <h3>Atualizar demandas</h3>
-    <div class="section-label">EMP — lista de países</div>
-    <textarea id="inp-emp" rows="2"></textarea>
-    <div class="section-label mt6">CC — lista de países</div>
+    <div>CC — lista de países</div>
     <textarea id="inp-cc" rows="2"></textarea>
-    <div class="btn-row">
-      <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
-      <button id="btn-reset-dem">Restaurar padrão</button>
-    </div>
-    <div class="notice" id="notice-dem">✓ Demandas salvas e sincronizadas para todos!</div>
+    <div>EMP — lista de países</div>
+    <textarea id="inp-emp" rows="2"></textarea>
+    <button id="btn-apply-dem">Aplicar demandas</button>
   </div>
 
   <div class="update-area">
-    <h3>Atualizar escala de empréstimo</h3>
-    <div class="section-label">Um responsável por dia (segunda a sexta)</div>
-    <textarea id="inp-escala" rows="5"></textarea>
-    <div class="btn-row">
-      <button class="primary" id="btn-apply-esc">Aplicar escala</button>
-      <button id="btn-reset-esc">Restaurar escala</button>
-    </div>
-    <div class="notice" id="notice-esc">✓ Escala salva e sincronizada para todos!</div>
+    <h3>Atualizar escala</h3>
+    <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Lucas&#10;Quarta: Léo&#10;Quinta: Ryan&#10;Sexta: Pedro"></textarea>
+    <button id="btn-apply-esc">Aplicar escala</button>
   </div>
 </div>
 
-<div id="tooltip"></div>
+<div class="tooltip" id="tooltip"></div>
 
 <script>
-// 🔹 Configuração Firebase
-const firebaseConfig = {
-  apiKey: "xxx",
-  authDomain: "xxx",
-  databaseURL: "xxx",
-  projectId: "xxx",
+firebase.initializeApp({
+  apiKey: "SUA_API_KEY",
+  databaseURL: "SUA_DATABASE_URL"
+});
+const db=firebase.database();
+
+const DAY_MAP={0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
+const DAY_NAMES={1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
+const AVAIL={
+  BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'], US:['seg','ter','qua','qui','sex'],
+  IN:['ter','qua','qui'], MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'],
+  PH:['seg','qui','sex'], AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'],
+  CL:['seg','ter','qua','qui'], PE:['seg','ter','qua','qui'],
+  DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'],
+  BE:['seg','ter','qua','qui','sex'], TR:['seg','qua','sex'], VN:['seg','qua','sex'],
+  GR:['seg','ter','qui'], ID:['seg','ter','qui'], EG:['seg','ter','qui'],
+  JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// 🔹 Dados iniciais
-const PEOPLE_CC = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
-const PEOPLE_EMP_BASE = ['WALDIR','VICTOR'];
-const DOMAIN_MAP = {
-  BR:['vouquitar','cardfacil'], AR:['tarjetasargentinas','solicitecartao'], US:['gotallcards'], DE:['dekreditkarte'], JP:['justgreatcards'],
-  TH:['batkredit'], FR:['unum/fr'], AU:['unum/au'], PH:['unum/ph'], CO:['tarjetaahora'], PE:['unum/pe'], BE:['antivora']
+const DOMAIN_MAP={
+  BR:['vouquitar','cardfacil'], NL:['dekredit'], US:['gotallcards'], IN:['wheresmycard'],
+  MX:['mejoresopciones','unum.mx'], AU:['unum.au'], TH:['batkredit'], PH:['unum.ph'],
+  AR:['tarjetasargentinas','solicitecartao'], CO:['tarjetaahora'], CL:['unum.cl'], PE:['unum.pe'],
+  DE:['dekreditkarte','unum.de'], FR:['unum.fr'], BE:['antivora'], TR:['kredinow'], VN:['ttdtm'],
+  GR:['athivor'], ID:['unum.id'], EG:['unum.eg'], JP:['justgreatcards'], AE:['moneycredithub']
 };
-
-const AVAIL = {
-  BR:['seg','ter','qua','qui','sex'], US:['seg','ter','qua','qui','sex'], AR:['seg','qua','qui','sex'], MX:['seg','qua','sex'],
-  DE:['seg','ter','qua','qui','sex'], JP:['seg','ter','qua','qui','sex'], TH:['seg','ter','qui'], FR:['seg','ter','qua','qui','sex'],
-  AU:['seg','ter','qui'], PH:['seg','qui','sex'], CO:['seg','qua','qui','sex'], PE:['seg','ter','qua','qui'], BE:['seg','ter','qua','qui','sex']
-};
-
-const DAY_MAP = {0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
-const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira'};
-const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
-
-let state = {
+const PEOPLE_CC=['LUIZA','LUCAS','LÉO','RYAN','PEDRO'];
+const PEOPLE_EMP_FIXED=['WALDIR','VICTOR'];
+let state={
+  cc:'BR - AR - US - DE - JP - AU - PH - BE - TH - CO - NL - PE - FR',
   emp:'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
-  cc:'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR',
-  escala:{1:'LUIZA',2:'PEDRO',3:'LÉO',4:'RYAN',5:'EDUARDO'}
+  escala:{1:'LUIZA',2:'LUCAS',3:'LÉO',4:'RYAN',5:'PEDRO'}
 };
 
-// 🔹 Funções utilitárias
-function parseList(str){return str.toUpperCase().split(/[\s,\-\/]+/).map(s=>s.trim()).filter(Boolean);}
-function getTodayKey(){const d=new Date().getDay(); return {key:DAY_MAP[d], dow:d};}
-function showTooltip(content,x,y){const t=document.getElementById('tooltip'); t.innerHTML=content; t.style.left=x+'px'; t.style.top=y+'px'; t.style.display='block';}
-function hideTooltip(){document.getElementById('tooltip').style.display='none';}
+function parseList(str){return str.toUpperCase().split(/[\s,-]+/).filter(Boolean);}
+function getToday(){const d=new Date().getDay();return(d>=1&&d<=5)?d:1;}
 
-// 🔹 Render CC/EMP e Escala
-function renderAll(){
-  const {key,dow}=getTodayKey();
-  document.getElementById('day-badge').textContent = DAY_NAMES[dow]||'—';
+function render(){
+  const dow=getToday();const key=DAY_MAP[dow];document.getElementById('day-badge').textContent=DAY_NAMES[dow];
+  const ccList=parseList(state.cc).filter(c=>AVAIL[c]?.includes(key));
+  const empList=parseList(state.emp).filter(c=>AVAIL[c]?.includes(key));
+  const resp=state.escala[dow];
+  const empToday=[...PEOPLE_EMP_FIXED];if(resp&&!PEOPLE_EMP_FIXED.includes(resp))empToday.push(resp);
 
-  const empList = parseList(state.emp).filter(c=>AVAIL[c]?.includes(key));
-  const ccList = parseList(state.cc).filter(c=>AVAIL[c]?.includes(key));
+  // CC
+  const ccDiv=document.getElementById('cc-tags');ccDiv.innerHTML='';
+  ccList.forEach(c=>{const tag=document.createElement('span');tag.className='tag tag-cc';tag.textContent=c;tag.onmouseover=()=>showTooltip(c);tag.onmouseout=hideTooltip;ccDiv.appendChild(tag);});
+  document.getElementById('cc-total').textContent=ccList.length;
 
-  renderTags('cc-tags','tag-cc',ccList);
-  renderTags('emp-tags','tag-emp',empList);
+  // EMP
+  const empDiv=document.getElementById('emp-tags');empDiv.innerHTML='';
+  empToday.forEach(c=>{const tag=document.createElement('span');tag.className='tag tag-emp';tag.textContent=c;tag.onmouseover=()=>showTooltip(c);tag.onmouseout=hideTooltip;empDiv.appendChild(tag);});
+  document.getElementById('emp-total').textContent=empToday.length;
 
-  document.getElementById('cc-total').textContent = ccList.length;
-  document.getElementById('emp-total').textContent = empList.length;
-
-  const resp = state.escala[dow]||'—';
+  // Escala
   document.getElementById('hoje-pessoa').textContent=resp;
-
-  const ew=document.getElementById('escala-week');
-  ew.innerHTML='';
-  [1,2,3,4,5].forEach(d=>{
-    const div=document.createElement('div');
-    div.className='escala-day'+(d===dow?' today':'');
-    div.innerHTML=`<div class="d-name">${DAY_SHORT[d]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
-    div.addEventListener('click',()=>{alert('Dia: '+DAY_NAMES[d]+'\nResponsável: '+state.escala[d]);});
-    ew.appendChild(div);
-  });
+  const ew=document.getElementById('escala-week');ew.innerHTML='';
+  [1,2,3,4,5].forEach(d=>{const div=document.createElement('div');div.className='escala-day'+(d===dow?' today':'');div.innerHTML=`${DAY_NAMES[d]}<br>${state.escala[d]||'—'}`;div.onclick=()=>{document.getElementById('hoje-pessoa').textContent=state.escala[d];};ew.appendChild(div);});
 }
 
-// 🔹 Render tags com tooltip
-function renderTags(id,cls,list){
-  const el=document.getElementById(id);
-  if(!list.length){el.innerHTML='<span class="empty">Nenhum país disponível hoje</span>';return;}
-  el.innerHTML='';
-  list.forEach(p=>{
-    const span=document.createElement('span');
-    span.className='tag '+cls;
-    span.textContent=p;
-    span.addEventListener('mouseover',e=>{
-      const doms=(DOMAIN_MAP[p]||[]).join('<br>');
-      showTooltip('<b>'+p+'</b><br>'+doms,e.pageX+10,e.pageY+10);
-    });
-    span.addEventListener('mouseout',hideTooltip);
-    span.addEventListener('click',()=>{
-      const doms=(DOMAIN_MAP[p]||[]).join('\n');
-      alert('Domínios '+p+':\n'+doms);
-    });
-    el.appendChild(span);
-  });
-}
+const tooltip=document.getElementById('tooltip');
+function showTooltip(c){const doms=DOMAIN_MAP[c]||[];if(!doms.length)return;tooltip.innerHTML=doms.join('<br>');tooltip.style.display='block';document.onmousemove=e=>{tooltip.style.left=(e.pageX+10)+'px';tooltip.style.top=(e.pageY+10)+'px';};}
+function hideTooltip(){tooltip.style.display='none';document.onmousemove=null;}
 
-// 🔹 Salvar e carregar Firebase
+// Sincronização Firebase
 function saveState(){
-  db.ref('painel/demandas').set({emp:state.emp,cc:state.cc});
+  db.ref('painel/demandas').set({cc:state.cc,emp:state.emp});
   db.ref('painel/escala').set(state.escala);
-  document.getElementById('notice-dem').style.display='block';
-  document.getElementById('notice-esc').style.display='block';
-  setTimeout(()=>{document.getElementById('notice-dem').style.display='none'; document.getElementById('notice-esc').style.display='none';},3000);
 }
+
 function loadState(){
-  db.ref('painel/demandas').once('value').then(snap=>{
-    if(snap.exists()){state.emp=snap.val().emp; state.cc=snap.val().cc;}
-    renderAll();
-  });
-  db.ref('painel/escala').once('value').then(snap=>{
-    if(snap.exists()){state.escala=snap.val();}
-    renderAll();
-  });
+  db.ref('painel/demandas').on('value',snap=>{if(snap.val()){state.cc=snap.val().cc;state.emp=snap.val().emp;render();}});
+  db.ref('painel/escala').on('value',snap=>{if(snap.val()){state.escala=snap.val();render();}});
 }
 
-// 🔹 Eventos
+// APLICAR DEMANDAS
 document.getElementById('btn-apply-dem').onclick=()=>{
-  state.emp=document.getElementById('inp-emp').value;
-  state.cc=document.getElementById('inp-cc').value;
-  saveState();
-  renderAll();
-};
-document.getElementById('btn-reset-dem').onclick=()=>{
-  document.getElementById('inp-emp').value=state.emp;
-  document.getElementById('inp-cc').value=state.cc;
-  renderAll();
-};
-document.getElementById('btn-apply-esc').onclick=()=>{
-  const arr=document.getElementById('inp-escala').value.split('\n').map(s=>s.trim());
-  [1,2,3,4,5].forEach((d,i)=>{state.escala[d]=arr[i]||state.escala[d];});
-  saveState();
-  renderAll();
-};
-document.getElementById('btn-reset-esc').onclick=()=>{
-  const val=[1,2,3,4,5].map(d=>state.escala[d]).join('\n');
-  document.getElementById('inp-escala').value=val;
-  renderAll();
+  const c=document.getElementById('inp-cc').value.trim();
+  const e=document.getElementById('inp-emp').value.trim();
+  if(c)state.cc=c;if(e)state.emp=e;saveState();render();
 };
 
-// 🔹 Inicialização
-window.onload=()=>{
-  document.getElementById('inp-emp').value=state.emp;
-  document.getElementById('inp-cc').value=state.cc;
-  document.getElementById('inp-escala').value=[1,2,3,4,5].map(d=>state.escala[d]).join('\n');
-  loadState();
+// APLICAR ESCALA
+document.getElementById('btn-apply-esc').onclick=()=>{
+  const v=document.getElementById('inp-escala').value.trim();
+  v.split('\n').forEach(l=>{const m=l.match(/^(\w+)\s*[:\-]\s*(.+)$/i);if(m){const dmap={'segunda':1,'terca':2,'terça':2,'quarta':3,'quinta':4,'sexta':5};const dk=dmap[m[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')];if(dk)state.escala[dk]=m[2].trim();}});saveState();render();
 };
+
+// INIT
+loadState();
+render();
 </script>
 </body>
 </html>
