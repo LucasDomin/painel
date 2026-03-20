@@ -5,83 +5,111 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Campanhas</title>
 <style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  :root{--bg:#fff;--bg2:#f5f5f3;--bg3:#efefec;--text:#1a1a18;--text2:#6b6b67;--border:rgba(0,0,0,.12);--info-bg:#e6f1fb;--info-text:#0c447c;--success-bg:#eaf3de;--success-text:#27500a;--radius-md:6px;--radius-lg:10px;--font:Arial, Helvetica, sans-serif;}
-  body{font-family:var(--font);background:var(--bg3);padding:20px;}
-  .container{max-width:900px;margin:auto;}
-  .header{display:flex;justify-content:space-between;margin-bottom:20px;}
-  .card{background:var(--bg);padding:15px;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:10px;}
-  .card-title{font-weight:bold;margin-bottom:8px;}
-  .tag{padding:4px 8px;border-radius:6px;margin:2px;display:inline-block;cursor:pointer;font-size:12px;}
-  .tag-cc{background:var(--info-bg);}
-  .tag-emp{background:var(--success-bg);}
-  .tag.selected{outline:2px solid #333;}
-  .escala-week{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:10px;}
-  .escala-day{background:#eee;padding:8px;text-align:center;border-radius:6px;cursor:pointer;}
-  .escala-day.today{background:var(--success-bg);transform:scale(1.05);}
-  .person-block{background:#f9f9f9;padding:8px;margin-top:8px;border-radius:6px;}
-  .history{font-size:11px;margin-top:5px;color:#666;}
-  .update-area{background:var(--bg2);padding:10px;margin-bottom:10px;border-radius:var(--radius-md);}
-  .tooltip{position:absolute;background:#fff;border:1px solid #ccc;padding:6px 8px;border-radius:6px;font-size:12px;display:none;z-index:10;white-space:nowrap;}
-  textarea{width:100%;padding:6px;border-radius:6px;margin-top:5px;margin-bottom:5px;font-family:var(--font);}
-  button{padding:6px 12px;margin-right:5px;border-radius:6px;cursor:pointer;}
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --bg:#ffffff; --bg2:#f5f5f3; --bg3:#efefec;
+    --text:#1a1a18; --text2:#6b6b67; --border:rgba(0,0,0,.12);
+    --info-bg:#e6f1fb; --info-text:#0c447c; --info-border:rgba(12,68,124,0.25);
+    --success-bg:#eaf3de; --success-text:#27500a; --success-border:rgba(39,80,10,0.25);
+    --radius-md:6px; --radius-lg:10px;
+  }
+  body { font-family:Arial; background:var(--bg3); padding:20px; color:var(--text);}
+  .container { max-width:900px; margin:auto; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;}
+  .day-badge { background:var(--info-bg); color:var(--info-text); padding:4px 10px; border-radius:var(--radius-lg);}
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:15px; }
+  .card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:15px; }
+  .card-title { font-weight:bold; margin-bottom:10px; font-size:14px; display:flex; justify-content:space-between; align-items:center; }
+  .total-badge { background:var(--bg2); padding:2px 6px; border-radius:var(--radius-md); font-size:12px;}
+  .tag { display:inline-block; margin:2px; padding:4px 8px; border-radius:var(--radius-md); cursor:pointer; font-size:12px; }
+  .tag-cc { background:var(--info-bg); color:var(--info-text); }
+  .tag-emp { background:var(--success-bg); color:var(--success-text);}
+  .tag:hover { opacity:.8;}
+  .escala-card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:15px; margin-bottom:15px;}
+  .escala-name { font-size:20px; font-weight:bold;}
+  .escala-sub { font-size:12px; color:var(--text2);}
+  .escala-week { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:10px; }
+  .escala-day { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-md); padding:5px; text-align:center; font-size:12px; cursor:pointer;}
+  .escala-day.today { background:var(--success-bg); border-color:var(--success-border);}
+  .escala-day.today .d-name,.escala-day.today .d-person { color:var(--success-text);}
+  .d-name { font-weight:500; font-size:11px; }
+  .d-person { font-weight:500; font-size:12px; }
+  .update-area { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:15px; margin-bottom:15px;}
+  textarea { width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:var(--radius-md); font-family:Arial; font-size:12px; resize:vertical;}
+  button { padding:6px 12px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--bg); cursor:pointer; margin-top:5px;}
+  button.primary { background:var(--info-bg); border:1px solid var(--info-border); color:var(--info-text);}
+  .notice { font-size:12px; color:green; margin-top:5px; display:none;}
+  .dist-person { border:1px solid #ccc; border-radius:var(--radius-md); padding:6px; margin-bottom:6px;}
+  .dist-name { font-weight:bold; margin-bottom:4px;}
+  .clickable { cursor:pointer; display:inline-block; margin:2px; padding:3px 6px; border-radius:var(--radius-md); background:var(--bg2);}
+  .clickable.selected { background:var(--success-bg);}
+  .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; }
+  .modal-box { background:#fff; padding:15px; border-radius:var(--radius-lg);}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 </head>
 <body>
 <div class="container">
+
   <div class="header">
     <h3>Painel de campanhas</h3>
-    <span id="day-badge">—</span>
+    <span class="day-badge" id="day-badge">—</span>
   </div>
 
-  <div class="card">
-    <div class="card-title">Cartão de crédito — disponíveis hoje <span id="cc-total"></span></div>
-    <div id="cc-tags"></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Cartão de crédito — disponíveis hoje <span class="total-badge" id="cc-total">0</span></div>
+      <div id="cc-tags"><span>Carregando...</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Empréstimo — disponíveis hoje <span class="total-badge" id="emp-total">0</span></div>
+      <div id="emp-tags"><span>Carregando...</span></div>
+    </div>
   </div>
 
-  <div class="card">
-    <div class="card-title">Empréstimo — disponíveis hoje <span id="emp-total"></span></div>
-    <div id="emp-tags"></div>
-  </div>
-
-  <div class="card">
+  <div class="escala-card">
     <div class="card-title">Escala de empréstimo</div>
-    <span id="hoje-pessoa">—</span>
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+      <span class="escala-name" id="hoje-pessoa">—</span>
+      <span class="escala-sub" id="hoje-label">responsável hoje</span>
+    </div>
     <div class="escala-week" id="escala-week"></div>
   </div>
 
   <div class="update-area">
     <h3>Atualizar demandas</h3>
-    <div>CC — lista de países</div>
+    <div class="section-label">CC — lista de países</div>
     <textarea id="inp-cc" rows="2"></textarea>
-    <div>EMP — lista de países</div>
+    <div class="section-label mt6">EMP — lista de países</div>
     <textarea id="inp-emp" rows="2"></textarea>
-    <button id="btn-apply-dem">Aplicar demandas</button>
+    <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
+    <button id="btn-reset-dem">Restaurar padrão</button>
+    <div class="notice" id="notice-dem">✓ Demandas salvas e sincronizadas para todos!</div>
   </div>
 
   <div class="update-area">
-    <h3>Atualizar escala</h3>
-    <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Lucas&#10;Quarta: Léo&#10;Quinta: Ryan&#10;Sexta: Pedro"></textarea>
-    <button id="btn-apply-esc">Aplicar escala</button>
+    <h3>Atualizar escala de empréstimo</h3>
+    <div class="section-label">Segunda a Sexta — responsável por dia</div>
+    <textarea id="inp-escala" rows="5"></textarea>
+    <button class="primary" id="btn-apply-esc">Aplicar escala</button>
+    <button id="btn-reset-esc">Restaurar escala</button>
+    <div class="notice" id="notice-esc">✓ Escala salva e sincronizada para todos!</div>
+  </div>
+
+</div>
+
+<div id="domain-modal" class="modal">
+  <div class="modal-box">
+    <div id="modal-content"></div>
+    <button onclick="closeModal()">Fechar</button>
   </div>
 </div>
 
-<div class="tooltip" id="tooltip"></div>
-
 <script>
-firebase.initializeApp({
-  apiKey: "SUA_API_KEY",
-  databaseURL: "SUA_DATABASE_URL"
-});
-const db=firebase.database();
-
-const DAY_MAP={0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
-const DAY_NAMES={1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
-const AVAIL={
-  BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'], US:['seg','ter','qua','qui','sex'],
-  IN:['ter','qua','qui'], MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'],
+// ── CONFIGURAÇÕES ──
+const AVAIL = {
+  BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'],
+  US:['seg','ter','qua','qui','sex'], IN:['ter','qua','qui'],
+  MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'],
   PH:['seg','qui','sex'], AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'],
   CL:['seg','ter','qua','qui'], PE:['seg','ter','qua','qui'],
   DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'],
@@ -89,79 +117,143 @@ const AVAIL={
   GR:['seg','ter','qui'], ID:['seg','ter','qui'], EG:['seg','ter','qui'],
   JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
 };
-const DOMAIN_MAP={
+
+const DAY_MAP   = {0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
+const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira'};
+
+const DEFAULTS = {
+  emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
+  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR',
+  escala: {1:'Luiza',2:'Lucas',3:'LÉO',4:'Ryan',5:'Pedro'}
+};
+
+const DOMAIN_MAP = {
   BR:['vouquitar','cardfacil'], NL:['dekredit'], US:['gotallcards'], IN:['wheresmycard'],
   MX:['mejoresopciones','unum.mx'], AU:['unum.au'], TH:['batkredit'], PH:['unum.ph'],
   AR:['tarjetasargentinas','solicitecartao'], CO:['tarjetaahora'], CL:['unum.cl'], PE:['unum.pe'],
   DE:['dekreditkarte','unum.de'], FR:['unum.fr'], BE:['antivora'], TR:['kredinow'], VN:['ttdtm'],
   GR:['athivor'], ID:['unum.id'], EG:['unum.eg'], JP:['justgreatcards'], AE:['moneycredithub']
 };
-const PEOPLE_CC=['LUIZA','LUCAS','LÉO','RYAN','PEDRO'];
-const PEOPLE_EMP_FIXED=['WALDIR','VICTOR'];
-let state={
-  cc:'BR - AR - US - DE - JP - AU - PH - BE - TH - CO - NL - PE - FR',
-  emp:'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
-  escala:{1:'LUIZA',2:'LUCAS',3:'LÉO',4:'RYAN',5:'PEDRO'}
-};
 
-function parseList(str){return str.toUpperCase().split(/[\s,-]+/).filter(Boolean);}
-function getToday(){const d=new Date().getDay();return(d>=1&&d<=5)?d:1;}
+// Nomes
+const PEOPLE_CC = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO'];
+const PEOPLE_EMP_BASE = ['WALDIR','VICTOR'];
 
-function render(){
-  const dow=getToday();const key=DAY_MAP[dow];document.getElementById('day-badge').textContent=DAY_NAMES[dow];
-  const ccList=parseList(state.cc).filter(c=>AVAIL[c]?.includes(key));
-  const empList=parseList(state.emp).filter(c=>AVAIL[c]?.includes(key));
-  const resp=state.escala[dow];
-  const empToday=[...PEOPLE_EMP_FIXED];if(resp&&!PEOPLE_EMP_FIXED.includes(resp))empToday.push(resp);
+let state = JSON.parse(JSON.stringify(DEFAULTS));
+let selectedDow = 1;
 
-  // CC
-  const ccDiv=document.getElementById('cc-tags');ccDiv.innerHTML='';
-  ccList.forEach(c=>{const tag=document.createElement('span');tag.className='tag tag-cc';tag.textContent=c;tag.onmouseover=()=>showTooltip(c);tag.onmouseout=hideTooltip;ccDiv.appendChild(tag);});
-  document.getElementById('cc-total').textContent=ccList.length;
+// ── FUNÇÕES ──
+function parseList(str){ return str.toUpperCase().split(/[\s,\-\/]+/).filter(Boolean); }
+function getTodayKey(){ const d=new Date().getDay(); return {key:DAY_MAP[d], dow:d>=1&&d<=5?d:1}; }
+function showNotice(id){ const el=document.getElementById(id); el.style.display='block'; setTimeout(()=>el.style.display='none',3000);}
+function closeModal(){document.getElementById('domain-modal').style.display='none';}
 
-  // EMP
-  const empDiv=document.getElementById('emp-tags');empDiv.innerHTML='';
-  empToday.forEach(c=>{const tag=document.createElement('span');tag.className='tag tag-emp';tag.textContent=c;tag.onmouseover=()=>showTooltip(c);tag.onmouseout=hideTooltip;empDiv.appendChild(tag);});
-  document.getElementById('emp-total').textContent=empToday.length;
+function renderAll(){
+  const {key,dow} = getTodayKey();
+  selectedDow = dow;
+  document.getElementById('day-badge').textContent = DAY_NAMES[dow]||'—';
+
+  const ccList = parseList(state.cc).filter(c=>AVAIL[c]?.includes(key));
+  const empList = parseList(state.emp).filter(c=>AVAIL[c]?.includes(key));
+
+  // RESPONSÁVEL DO DIA
+  const resp = state.escala[dow];
+
+  // CARTÃO DE CRÉDITO — remove EMP do dia
+  const ccFinal = ccList.filter(c=>!empList.includes(c));
+
+  document.getElementById('cc-total').textContent = ccFinal.length;
+  document.getElementById('emp-total').textContent = empList.length;
+
+  const ccWrap = document.getElementById('cc-tags'); ccWrap.innerHTML='';
+  const empWrap = document.getElementById('emp-tags'); empWrap.innerHTML='';
+
+  ccFinal.forEach(c=>{
+    const tag = document.createElement('span');
+    tag.className='tag tag-cc';
+    tag.textContent=c;
+    tag.title = DOMAIN_MAP[c]?.join(', ')||'';
+    ccWrap.appendChild(tag);
+  });
+
+  empList.forEach(c=>{
+    const tag = document.createElement('span');
+    tag.className='tag tag-emp';
+    tag.textContent=c;
+    tag.title = DOMAIN_MAP[c]?.join(', ')||'';
+    empWrap.appendChild(tag);
+  });
 
   // Escala
-  document.getElementById('hoje-pessoa').textContent=resp;
-  const ew=document.getElementById('escala-week');ew.innerHTML='';
-  [1,2,3,4,5].forEach(d=>{const div=document.createElement('div');div.className='escala-day'+(d===dow?' today':'');div.innerHTML=`${DAY_NAMES[d]}<br>${state.escala[d]||'—'}`;div.onclick=()=>{document.getElementById('hoje-pessoa').textContent=state.escala[d];};ew.appendChild(div);});
+  document.getElementById('hoje-pessoa').textContent = resp;
+  const ew = document.getElementById('escala-week'); ew.innerHTML='';
+  for(let d=1;d<=5;d++){
+    const div = document.createElement('div');
+    div.className='escala-day'+(d===dow?' today':'');
+    div.innerHTML=`<div class="d-name">${['Seg','Ter','Qua','Qui','Sex'][d-1]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
+    div.onclick=()=>{ selectedDow=d; renderAll(); };
+    ew.appendChild(div);
+  }
 }
 
-const tooltip=document.getElementById('tooltip');
-function showTooltip(c){const doms=DOMAIN_MAP[c]||[];if(!doms.length)return;tooltip.innerHTML=doms.join('<br>');tooltip.style.display='block';document.onmousemove=e=>{tooltip.style.left=(e.pageX+10)+'px';tooltip.style.top=(e.pageY+10)+'px';};}
-function hideTooltip(){tooltip.style.display='none';document.onmousemove=null;}
-
-// Sincronização Firebase
-function saveState(){
-  db.ref('painel/demandas').set({cc:state.cc,emp:state.emp});
-  db.ref('painel/escala').set(state.escala);
+// ── Storage (como no seu código antigo, para todos) ──
+async function loadFromStorage(){
+  try{
+    const demR = await window.storage.get('painel:demandas',true);
+    const escR = await window.storage.get('painel:escala',true);
+    if(demR){ const d=JSON.parse(demR.value); if(d.cc)state.cc=d.cc;if(d.emp)state.emp=d.emp; }
+    if(escR){ const e=JSON.parse(escR.value); Object.assign(state.escala,e);}
+  }catch(e){console.warn(e);}
+  renderAll();
 }
 
-function loadState(){
-  db.ref('painel/demandas').on('value',snap=>{if(snap.val()){state.cc=snap.val().cc;state.emp=snap.val().emp;render();}});
-  db.ref('painel/escala').on('value',snap=>{if(snap.val()){state.escala=snap.val();render();}});
+async function saveDemandas(){
+  await window.storage.set('painel:demandas',JSON.stringify({cc:state.cc,emp:state.emp}),true);
 }
 
-// APLICAR DEMANDAS
-document.getElementById('btn-apply-dem').onclick=()=>{
-  const c=document.getElementById('inp-cc').value.trim();
-  const e=document.getElementById('inp-emp').value.trim();
-  if(c)state.cc=c;if(e)state.emp=e;saveState();render();
+async function saveEscala(){
+  await window.storage.set('painel:escala',JSON.stringify(state.escala),true);
+}
+
+// ── Eventos ──
+document.getElementById('btn-apply-dem').onclick = async function(){
+  const cc=document.getElementById('inp-cc').value.trim();
+  const emp=document.getElementById('inp-emp').value.trim();
+  if(cc)state.cc=cc;
+  if(emp)state.emp=emp;
+  renderAll(); await saveDemandas(); showNotice('notice-dem');
+};
+document.getElementById('btn-reset-dem').onclick = async function(){
+  state.cc=DEFAULTS.cc; state.emp=DEFAULTS.emp;
+  document.getElementById('inp-cc').value=''; document.getElementById('inp-emp').value='';
+  renderAll(); await saveDemandas(); showNotice('notice-dem');
 };
 
-// APLICAR ESCALA
-document.getElementById('btn-apply-esc').onclick=()=>{
+document.getElementById('btn-apply-esc').onclick=async function(){
   const v=document.getElementById('inp-escala').value.trim();
-  v.split('\n').forEach(l=>{const m=l.match(/^(\w+)\s*[:\-]\s*(.+)$/i);if(m){const dmap={'segunda':1,'terca':2,'terça':2,'quarta':3,'quinta':4,'sexta':5};const dk=dmap[m[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')];if(dk)state.escala[dk]=m[2].trim();}});saveState();render();
+  if(!v)return;
+  const map={segunda:1,terca:2,terça:2,quarta:3,quinta:4,sexta:5};
+  const parsed={};
+  v.split('\n').forEach(l=>{
+    const m=l.match(/^(\w+)[:\s]+(.+)/i);
+    if(m){ const d=map[m[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')]; if(d)parsed[d]=m[2].trim();}
+  });
+  if(Object.keys(parsed).length){ Object.assign(state.escala,parsed); renderAll(); await saveEscala(); showNotice('notice-esc'); }
+};
+document.getElementById('btn-reset-esc').onclick=async function(){
+  state.escala=JSON.parse(JSON.stringify(DEFAULTS.escala));
+  document.getElementById('inp-escala').value=''; renderAll(); await saveEscala(); showNotice('notice-esc');
 };
 
-// INIT
-loadState();
-render();
+// Tooltip de domínios ao passar mouse
+document.getElementById('cc-tags').addEventListener('mouseover',e=>{
+  if(e.target.classList.contains('tag')) e.target.title = DOMAIN_MAP[e.target.textContent]?.join(', ')||'';
+});
+document.getElementById('emp-tags').addEventListener('mouseover',e=>{
+  if(e.target.classList.contains('tag')) e.target.title = DOMAIN_MAP[e.target.textContent]?.join(', ')||'';
+});
+
+loadFromStorage();
 </script>
 </body>
 </html>
-
