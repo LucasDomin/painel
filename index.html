@@ -2,68 +2,242 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Campanhas</title>
 
 <style>
-body { font-family: Arial; background:#efefec; padding:20px; }
-.container { max-width:900px; margin:auto; }
+body{font-family:Arial;background:#efefec;padding:20px}
+.container{max-width:900px;margin:auto}
 
-.header { display:flex; justify-content:space-between; margin-bottom:15px; }
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:#fff;padding:15px;border-radius:10px}
+.tag{padding:4px 8px;border-radius:6px;cursor:pointer;margin:3px;display:inline-block;font-size:12px}
+.tag-cc{background:#e6f1fb}
+.tag-emp{background:#eaf3de}
+.done{background:#d4edda!important}
 
-.card { background:#fff; padding:15px; border-radius:10px; margin-bottom:10px; }
+.escala-week{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:10px}
+.escala-day{background:#eee;padding:8px;text-align:center;cursor:pointer;border-radius:6px}
+.today{background:#c8f7c5}
 
-.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-
-.tag { padding:5px 10px; border-radius:6px; cursor:pointer; margin:3px; display:inline-block; font-size:12px; }
-.tag-cc { background:#e6f1fb; }
-.tag-emp { background:#eaf3de; }
-.done { background:#d4edda !important; }
-
-.escala-day { background:#eee; padding:8px; cursor:pointer; border-radius:6px; text-align:center; }
-.today { background:#cfe8c9; }
-
-.person-block { background:#f9f9f9; padding:10px; margin-top:10px; border-radius:6px; }
-
-.modal {
- position:fixed;
- top:0; left:0;
- width:100%; height:100%;
- background:rgba(0,0,0,.4);
- display:none;
- align-items:center;
- justify-content:center;
-}
-
-.modal-box {
- background:#fff;
- padding:20px;
- border-radius:10px;
-}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:#0006;display:none;align-items:center;justify-content:center}
+.modal-box{background:#fff;padding:20px;border-radius:10px}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<div class="header">
-<h3>Painel de campanhas</h3>
-<span id="day-badge"></span>
-</div>
+<h2>Painel de campanhas</h2>
+<div id="day"></div>
 
 <div class="grid2">
 <div class="card">
-<b>Cartão de crédito — disponíveis hoje</b>
-<div id="cc-tags"></div>
+<b>Cartão de crédito</b>
+<div id="cc"></div>
 </div>
 
 <div class="card">
-<b>Empréstimo — disponíveis hoje</b>
-<div id="emp-tags"></div>
+<b>Empréstimo</b>
+<div id="emp"></div>
 </div>
 </div>
 
 <div class="card">
 <b>Escala</b>
-<div id="hoje-pessoa"></div>
-<div id="escala"></
+<div id="resp"></div>
+<div class="escala-week" id="week"></div>
+</div>
+
+<div class="card">
+<b>Atualizar demandas</b><br>
+CC:<br><textarea id="inp-cc"></textarea><br>
+EMP:<br><textarea id="inp-emp"></textarea><br>
+<button onclick="saveDem()">Salvar</button>
+</div>
+
+<div class="card">
+<b>Atualizar escala</b><br>
+<textarea id="inp-esc"></textarea><br>
+<button onclick="saveEsc()">Salvar</button>
+</div>
+
+</div>
+
+<div id="modal" class="modal">
+<div class="modal-box">
+<div id="modal-content"></div><br>
+<button onclick="closeModal()">Fechar</button>
+</div>
+</div>
+
+<script>
+/* ================= DADOS ================= */
+
+const DEFAULTS={
+cc:'BR AR MX US DE JP TR AU PH BE TH CO NL PE FR',
+emp:'MX AR US AU VN PH CL GR CO AE PE BE',
+escala:{1:'LUIZA',2:'LUCAS',3:'LÉO',4:'RYAN',5:'PEDRO'}
+};
+
+let state=JSON.parse(JSON.stringify(DEFAULTS));
+
+const AVAIL={
+BR:['seg','ter','qua','qui','sex'],
+US:['seg','ter','qua','qui','sex'],
+MX:['seg','qua','sex'],
+AR:['seg','qua','qui','sex'],
+DE:['seg','ter','qua','qui','sex'],
+JP:['seg','ter','qua','qui','sex'],
+TH:['seg','ter','qui'],
+FR:['seg','ter','qua','qui','sex'],
+NL:['seg','qua','sex'],
+PH:['seg','qui','sex'],
+CO:['seg','qua','qui','sex'],
+PE:['seg','ter','qua','qui'],
+BE:['seg','ter','qua','qui','sex'],
+AU:['seg','ter','qui'],
+TR:['seg','qua','sex'],
+VN:['seg','qua','sex'],
+GR:['seg','ter','qui'],
+CL:['seg','ter','qua','qui'],
+AE:['seg','ter','qua','qui','sex']
+};
+
+const DOMAINS={
+BR:['vouquitar','cardfacil'],
+NL:['dekredit'],
+US:['gotallcards'],
+IN:['wheresmycard'],
+MX:['mejoresopciones','unum.mx'],
+AU:['unum.au'],
+TH:['batkredit'],
+PH:['unum.ph'],
+AR:['tarjetasargentinas','solicitecartao'],
+CO:['tarjetaahora'],
+CL:['unum.cl'],
+PE:['unum.pe'],
+DE:['dekreditkarte','unum.de'],
+FR:['unum.fr'],
+BE:['antivora'],
+TR:['kredinow'],
+VN:['ttdtm'],
+GR:['athivor'],
+JP:['justgreatcards'],
+AE:['moneycredithub']
+};
+
+const DAYMAP={1:'seg',2:'ter',3:'qua',4:'qui',5:'sex'};
+const DAYNAME={1:'Seg',2:'Ter',3:'Qua',4:'Qui',5:'Sex'};
+
+/* ================= CORE ================= */
+
+function parse(str){
+return str.split(/[\s,-]+/).filter(Boolean);
+}
+
+function today(){
+let d=new Date().getDay();
+return (d>=1&&d<=5)?d:1;
+}
+
+function filter(list,dow){
+return list.filter(c=>AVAIL[c]?.includes(DAYMAP[dow]));
+}
+
+/* ================= RENDER ================= */
+
+function render(dow=today()){
+
+document.getElementById('day').innerText=DAYNAME[dow];
+
+let cc=filter(parse(state.cc),dow);
+let emp=filter(parse(state.emp),dow);
+
+document.getElementById('cc').innerHTML=cc.map(c=>tag(c,'tag-cc')).join('');
+document.getElementById('emp').innerHTML=emp.map(c=>tag(c,'tag-emp')).join('');
+
+document.getElementById('resp').innerHTML='<b>'+state.escala[dow]+'</b>';
+
+renderWeek(dow);
+}
+
+/* ================= TAG ================= */
+
+function tag(c,cls){
+return `<span class="tag ${cls}" onclick="clickTag('${c}')">${c}</span>`;
+}
+
+function clickTag(c){
+let d=DOMAINS[c]||[];
+document.getElementById('modal-content').innerHTML=
+`<b>${c}</b><br><br>`+d.map(x=>'• '+x).join('<br>');
+document.getElementById('modal').style.display='flex';
+}
+
+function closeModal(){
+document.getElementById('modal').style.display='none';
+}
+
+/* ================= ESCALA ================= */
+
+function renderWeek(dow){
+let el=document.getElementById('week');
+el.innerHTML='';
+
+[1,2,3,4,5].forEach(d=>{
+let div=document.createElement('div');
+div.className='escala-day'+(d==dow?' today':'');
+div.innerHTML=DAYNAME[d]+'<br>'+state.escala[d];
+div.onclick=()=>render(d);
+el.appendChild(div);
+});
+}
+
+/* ================= STORAGE ================= */
+
+async function load(){
+try{
+let dem=await window.storage.get('dem',true);
+let esc=await window.storage.get('esc',true);
+
+if(dem?.value){
+let d=JSON.parse(dem.value);
+state.cc=d.cc||state.cc;
+state.emp=d.emp||state.emp;
+}
+
+if(esc?.value){
+state.escala=JSON.parse(esc.value);
+}
+}catch(e){}
+
+render();
+}
+
+async function saveDem(){
+state.cc=document.getElementById('inp-cc').value||state.cc;
+state.emp=document.getElementById('inp-emp').value||state.emp;
+
+await window.storage.set('dem',JSON.stringify({cc:state.cc,emp:state.emp}),true);
+
+render();
+}
+
+async function saveEsc(){
+let txt=document.getElementById('inp-esc').value.split('\n');
+[1,2,3,4,5].forEach((d,i)=>{
+if(txt[i]) state.escala[d]=txt[i].split(':')[1]?.trim()||txt[i];
+});
+
+await window.storage.set('esc',JSON.stringify(state.escala),true);
+
+render();
+}
+
+/* ================= INIT ================= */
+
+load();
+</script>
+
+</body>
+</html>
