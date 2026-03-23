@@ -43,6 +43,15 @@
   .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
   .card-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .total-badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: var(--radius-md); background: var(--bg2); color: var(--text2); }
+  .copy-btn {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+    border: 0.5px solid var(--border); background: transparent; color: var(--text3);
+    cursor: pointer; font-family: var(--font); letter-spacing: .02em;
+    transition: background .15s, color .15s, border-color .15s;
+    margin-left: auto;
+  }
+  .copy-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+  .copy-btn.copied { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
   .tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
   .tag { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-md); position: relative; cursor: default; user-select: none; }
   .tag-cc      { background: #e6f1fb; color: #0c447c; }
@@ -181,6 +190,7 @@
       <div class="card-title">
         Cartão de crédito — disponíveis <span id="cc-day-label">hoje</span>
         <span class="total-badge" id="cc-total">0</span>
+        <button class="copy-btn" id="btn-copy-cc" title="Copiar países">📋 copiar</button>
       </div>
       <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="cc-equipe"></div>
@@ -189,6 +199,7 @@
       <div class="card-title">
         Empréstimo — disponíveis <span id="emp-day-label">hoje</span>
         <span class="total-badge" id="emp-total">0</span>
+        <button class="copy-btn" id="btn-copy-emp" title="Copiar países">📋 copiar</button>
       </div>
       <div class="tag-wrap" id="emp-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="emp-equipe"></div>
@@ -322,10 +333,10 @@ const DOMAIN_MAP = {
   AE:['moneycredithub'],
   UK:['⚠ PENDENTE'],
   KR:['⚠ PENDENTE'],
-  CZ:['⚠ PENDENTE']
+  CZ:['unum/cz']
 };
 
-const PENDING_COUNTRIES = new Set(['UK','KR','CZ']);
+const PENDING_COUNTRIES = new Set(['UK','KR']);
 
 const CC_PESSOAS = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
 const EMP_FIXOS  = ['WALDIR','VICTOR'];
@@ -519,6 +530,23 @@ function renderTags() {
   }
   renderTagList(ccAvail,  'tag-cc',  'cc-tags',  'cc-total');
   renderTagList(empAvail, 'tag-emp', 'emp-tags', 'emp-total');
+
+  // ── Botões de cópia ───────────────────────────────────
+  function bindCopyBtn(btnId, ids) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.onclick = () => {
+      if (!ids.length) return;
+      const text = ids.join(' - ');
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '✓ copiado!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋 copiar'; btn.classList.remove('copied'); }, 2000);
+      });
+    };
+  }
+  bindCopyBtn('btn-copy-cc',  ccAvail);
+  bindCopyBtn('btn-copy-emp', empAvail);
 
   const escalaNome = (key && state.escala[dow]) ? state.escala[dow].toUpperCase() : null;
   const empEquipe  = [...EMP_FIXOS, ...(escalaNome ? [escalaNome] : [])];
