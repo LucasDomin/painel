@@ -155,6 +155,13 @@
   .ep-chip.done::before { content: '✓ '; }
   .ep-empty { font-size: 12px; color: var(--text3); font-style: italic; }
   .ep-weekend-msg { font-size: 13px; color: var(--text3); font-style: italic; text-align: center; padding: 1.5rem 0; }
+
+  /* ═══════════════ BADGE DE VERSÃO ═══════════════ */
+  .version-note {
+    font-size: 11px; color: var(--text3); text-align: right;
+    margin-top: 2rem; padding-top: .5rem;
+    border-top: 0.5px solid var(--border);
+  }
 </style>
 </head>
 <body>
@@ -243,27 +250,51 @@
     <div id="ep-content"><span class="hist-empty">Carregando...</span></div>
   </div>
 
+  <div class="version-note">Escala atualizada em 23/03/2025 — v2</div>
+
 </div>
 
 <script>
 // ══════════════════════════════════════════════════════════
-// DADOS FIXOS
+// DADOS FIXOS — AVAIL atualizado conforme escala 23/03/2025
+// Rosa = indisponível | Branco = disponível
+// Nota: Segunda-feira removida da maioria dos países nesta revisão.
+// IN (Índia) sem dias ativos na nova escala — mantido com array
+// vazio para não quebrar referências futuras.
 // ══════════════════════════════════════════════════════════
 const AVAIL = {
-  BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'],
-  US:['seg','ter','qua','qui','sex'], IN:['ter','qua','qui'],
-  MX:['seg','qua','sex'],            AU:['seg','ter','qui'],
-  TH:['seg','ter','qui'],            PH:['seg','qui','sex'],
-  AR:['seg','qua','qui','sex'],      CO:['seg','qua','qui','sex'],
-  CL:['seg','ter','qua','qui'],      PE:['seg','ter','qua','qui'],
-  DE:['seg','ter','qua','qui','sex'],FR:['seg','ter','qua','qui','sex'],
-  BE:['seg','ter','qua','qui','sex'],TR:['seg','qua','sex'],
-  VN:['seg','qua','sex'],            GR:['seg','ter','qui'],
-  ID:['seg','ter','qui'],            EG:['seg','ter','qui'],
-  JP:['seg','ter','qua','qui','sex'],AE:['seg','ter','qua','qui','sex'],
-  UK:['seg','qua','sex'],
-  KR:['seg','qua','sex'],
-  CZ:['seg','qua','sex']
+  // ── Americas & Oceania ─────────────────────────────────
+  BR: ['ter','qui','sex'],          // seg e qua removidas
+  NL: ['ter','qua','sex'],          // seg→ter
+  US: ['ter','qua','qui','sex'],    // seg removida
+  IN: [],                           // sem dias ativos na nova escala
+  MX: ['seg','qua','sex'],          // inalterado ✓
+  AU: ['ter','qui'],                // seg removida
+  TH: ['ter','qui'],                // seg removida
+  PH: ['seg','qui','sex'],          // inalterado ✓
+  AR: ['seg','qua','qui','sex'],    // inalterado ✓
+  CO: ['seg','qua','qui','sex'],    // inalterado ✓
+  CL: ['ter','qua','qui'],          // seg removida
+  PE: ['ter','qua','qui'],          // seg removida
+
+  // ── Europa ─────────────────────────────────────────────
+  DE: ['ter','qua','qui'],          // seg e sex removidas
+  FR: ['seg','qua','qui','sex'],    // ter removida
+  BE: ['seg','qua','qui','sex'],    // ter removida
+  TR: ['seg','qua','sex'],          // inalterado ✓
+  VN: ['seg','qua','sex'],          // inalterado ✓
+  GR: ['ter','qui'],                // seg removida
+  ID: ['ter','qui'],                // seg removida
+  EG: ['seg','ter','qui'],          // inalterado ✓
+
+  // ── Ásia & Oriente Médio ───────────────────────────────
+  JP: ['seg','qua','sex'],          // ter e qui removidas
+  AE: ['ter','qui'],                // seg, qua e sex removidas
+
+  // ── Pendentes (domínio ainda não configurado) ──────────
+  UK: ['seg','qua','sex'],          // inalterado ✓
+  KR: ['seg','qua','sex'],          // inalterado ✓
+  CZ: ['seg','qua','sex'],          // inalterado ✓
 };
 
 const DOMAIN_MAP = {
@@ -555,19 +586,16 @@ function buildPersonCard(nome, paises, tipo) {
   const card = document.createElement('div');
   card.className = 'ep-person-card';
 
-  // Head
   const head = document.createElement('div');
   head.className = 'ep-person-head';
   head.innerHTML = `<span class="ep-person-name">${nome}</span><span class="ep-progress-txt">${doneCnt}/${total}</span>`;
   card.appendChild(head);
 
-  // Progress bar
   const barWrap = document.createElement('div');
   barWrap.className = 'ep-progress-bar';
   barWrap.innerHTML = `<div class="ep-progress-fill ${barFill}" style="width:${pct}%"></div>`;
   card.appendChild(barWrap);
 
-  // Chips
   const chips = document.createElement('div');
   chips.className = 'ep-chips';
   if (!paises.length) {
@@ -644,7 +672,6 @@ function renderEquipePanel() {
   grid.appendChild(empCol);
   container.appendChild(grid);
 
-  // Handlers dos botões de limpar por seção (após inserção no DOM)
   document.getElementById('ep-clear-cc').onclick = async () => {
     ccEquipe.forEach(n => ccAvail.forEach(p => { delete doneState[doneKey('cc', n, p)]; }));
     await saveDone(); renderEquipePanel();
