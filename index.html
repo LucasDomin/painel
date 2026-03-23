@@ -155,6 +155,19 @@
   .ep-chip.done::before { content: '✓ '; }
   .ep-empty { font-size: 12px; color: var(--text3); font-style: italic; }
   .ep-weekend-msg { font-size: 13px; color: var(--text3); font-style: italic; text-align: center; padding: 1.5rem 0; }
+
+  /* ── Botão copiar países ── */
+  .btn-copy {
+    margin-left: auto; flex-shrink: 0;
+    width: 26px; height: 26px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px; border: 0.5px solid var(--border);
+    background: transparent; color: var(--text3);
+    cursor: pointer; font-size: 13px; line-height: 1;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .btn-copy:hover { background: var(--bg2); color: var(--text); border-color: var(--border2); }
+  .btn-copy.copied { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
 </style>
 </head>
 <body>
@@ -174,6 +187,7 @@
       <div class="card-title">
         Cartão de crédito — disponíveis <span id="cc-day-label">hoje</span>
         <span class="total-badge" id="cc-total">0</span>
+        <button class="btn-copy" id="btn-copy-cc" title="Copiar países">⎘</button>
       </div>
       <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="cc-equipe"></div>
@@ -182,6 +196,7 @@
       <div class="card-title">
         Empréstimo — disponíveis <span id="emp-day-label">hoje</span>
         <span class="total-badge" id="emp-total">0</span>
+        <button class="btn-copy" id="btn-copy-emp" title="Copiar países">⎘</button>
       </div>
       <div class="tag-wrap" id="emp-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="emp-equipe"></div>
@@ -201,10 +216,10 @@
 
   <div class="update-area">
     <h3>Atualizar demandas</h3>
-    <div class="section-label">EMP — lista de países (ex: MX - AR - US)</div>
-    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - CL - CO - PE - FR - EG - GR - UK - CZ"></textarea>
-    <div class="section-label mt6">CC — lista de países</div>
+    <div class="section-label">CC — lista de países</div>
     <textarea id="inp-cc"  rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ - GR - ID"></textarea>
+    <div class="section-label mt6">EMP — lista de países (ex: MX - AR - US)</div>
+    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - CO - PE - FR - EG - GR - UK - CZ"></textarea>
     <div class="btn-row">
       <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
       <button id="btn-reset-dem">Restaurar padrão</button>
@@ -249,32 +264,32 @@
 // ══════════════════════════════════════════════════════════
 // DADOS FIXOS
 // ══════════════════════════════════════════════════════════
-// AVAIL atualizado conforme tabela de escala (imagem anexada)
+// AVAIL — fonte oficial: lista enviada pelo cliente
 const AVAIL = {
-  BR:['ter','qui','sex'],            // removido seg e qua
-  NL:['ter','qua','sex'],            // removido seg, adicionado ter
-  US:['ter','qua','qui','sex'],      // removido seg
-  MX:['seg','qua','sex'],
-  AU:['ter','qui'],                  // removido seg
-  TH:['ter','qui'],                  // removido seg
-  CZ:['seg','qua','sex'],
-  PH:['seg','qui','sex'],
-  AR:['seg','qua','qui','sex'],
-  UK:['seg','qua','sex'],
-  CO:['seg','qua','qui','sex'],
-  CL:['ter','qua','qui'],            // removido seg
-  PE:['ter','qua','qui'],            // removido seg
-  DE:['ter','qua','qui'],            // removido seg e sex
-  KR:['seg','qua','sex'],
-  FR:['seg','qua','qui','sex'],      // removido ter
-  BE:['seg','qua','qui','sex'],      // removido ter
-  TR:['seg','qua','sex'],
-  VN:['seg','qua','sex'],
-  GR:['ter','qui'],                  // removido seg
-  ID:['ter','qui'],                  // removido seg
-  EG:['seg','ter','qui'],
-  JP:['seg','qua','sex'],            // removido ter e qui
-  AE:['ter','qui']                   // removido seg, qua e sex
+  BR: ['ter','qui','sex'],
+  NL: ['ter','qua','sex'],
+  US: ['ter','qua','qui','sex'],
+  MX: ['seg','qua','sex'],
+  AU: ['ter','qui'],
+  TH: ['ter','qui'],
+  CZ: ['seg','qua'],
+  PH: ['seg','qui','sex'],
+  AR: ['seg','qua','qui','sex'],
+  UK: ['seg','qua','sex'],
+  CO: ['seg','qua','qui','sex'],
+  CL: ['ter','qua','qui'],
+  PE: ['ter','qua','qui'],
+  DE: ['ter','qua','qui'],
+  KR: ['seg','qua','sex'],
+  FR: ['seg','qua','qui','sex'],
+  BE: ['seg','qua','qui','sex'],
+  TR: ['seg','qua','sex'],
+  VN: ['seg','qua','sex'],
+  GR: ['ter','qui'],
+  ID: ['ter','qui'],
+  EG: ['seg','ter','qui'],
+  JP: ['seg','qua','sex'],
+  AE: ['ter','qui']
 };
 
 const DOMAIN_MAP = {
@@ -314,7 +329,7 @@ const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta
 const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
 
 const DEFAULTS = {
-  emp: 'MX - AR - US - AU - VN - CL - CO - PE - FR - EG - GR - UK - CZ',
+  emp: 'MX - AR - US - AU - VN - PH - CL - CO - PE - FR - EG - GR - UK - CZ',
   cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ - GR - ID',
   escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Eduardo',5:'Ryan'}
 };
@@ -326,7 +341,8 @@ let selectedDow = new Date().getDay();
 
 // ── Helpers ───────────────────────────────────────────────
 function getTodayDow() { return new Date().getDay(); }
-function todayKey()    { return new Date().toISOString().slice(0,10); }
+const DONE_KEY   = 'equipe-done-v2';
+const DONE_TTL   = 48 * 60 * 60 * 1000; // 48 horas em ms
 function parseList(str) {
   return str.toUpperCase().split(/[\s,\-\/]+/).map(s => s.trim()).filter(s => s.length >= 2 && s.length <= 3);
 }
@@ -363,9 +379,13 @@ async function loadAll() {
   }
   const savedHist = await storageGet('painel-historico');
   if (Array.isArray(savedHist)) history = savedHist;
-  const savedDone = await storageGet('equipe-done-' + todayKey());
-  if (savedDone && typeof savedDone === 'object') doneState = savedDone;
-  else doneState = {};
+  const savedDone = await storageGet(DONE_KEY);
+  if (savedDone && typeof savedDone === 'object' && savedDone.ts && (Date.now() - savedDone.ts) < DONE_TTL) {
+    doneState = savedDone.data || {};
+  } else {
+    doneState = {};
+    if (savedDone) await storageSet(DONE_KEY, { data: {}, ts: Date.now() }); // limpa expirado
+  }
   setSyncStatus('ok', `Sincronizado às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
   renderAll();
   renderHistory();
@@ -381,7 +401,7 @@ async function saveState(patch) {
 }
 
 async function saveDone() {
-  await storageSet('equipe-done-' + todayKey(), doneState);
+  await storageSet(DONE_KEY, { data: doneState, ts: Date.now() });
 }
 
 function setSyncStatus(status, label) {
@@ -745,11 +765,32 @@ setInterval(async () => {
   }
   const savedHist = await storageGet('painel-historico');
   if (Array.isArray(savedHist)) history = savedHist;
-  const savedDone = await storageGet('equipe-done-' + todayKey());
-  if (savedDone && typeof savedDone === 'object') doneState = savedDone;
+  const savedDone = await storageGet(DONE_KEY);
+  if (savedDone && typeof savedDone === 'object' && savedDone.ts && (Date.now() - savedDone.ts) < DONE_TTL) {
+    doneState = savedDone.data || {};
+  } else if (savedDone) {
+    doneState = {};
+  }
   setSyncStatus('ok', `Sincronizado às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
   renderAll(); renderHistory(); renderEquipePanel();
 }, 30000);
+
+// ── Botões copiar países ──────────────────────────────────
+function setupCopyBtn(btnId, tagsId) {
+  document.getElementById(btnId).onclick = function() {
+    const tags = document.getElementById(tagsId).querySelectorAll('.tag');
+    if (!tags.length) return;
+    const text = Array.from(tags).map(t => t.childNodes[0].textContent.trim()).join(' - ');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = this;
+      btn.textContent = '✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '⎘'; btn.classList.remove('copied'); }, 1800);
+    });
+  };
+}
+setupCopyBtn('btn-copy-cc',  'cc-tags');
+setupCopyBtn('btn-copy-emp', 'emp-tags');
 
 // ── Init ──────────────────────────────────────────────────
 loadAll();
