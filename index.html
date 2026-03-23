@@ -45,47 +45,27 @@
   .total-badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: var(--radius-md); background: var(--bg2); color: var(--text2); }
   .tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
   .tag { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-md); position: relative; cursor: default; user-select: none; }
-  .tag-cc  { background: #e6f1fb; color: #0c447c; }
-  .tag-emp { background: #eaf3de; color: #27500a; }
+  .tag-cc      { background: #e6f1fb; color: #0c447c; }
+  .tag-emp     { background: #eaf3de; color: #27500a; }
+  .tag-pending { background: var(--warn-bg); color: var(--warn-text); border: 0.5px dashed var(--warn-border); }
   .empty { font-size: 13px; color: var(--text3); font-style: italic; }
-
-  /* ── Equipe badges ── */
-  .equipe-wrap { display: flex; flex-wrap: wrap; gap: 5px; margin-top: .5rem; padding-top: .5rem; border-top: 0.5px solid var(--border); }
+  .equipe-wrap  { display: flex; flex-wrap: wrap; gap: 5px; margin-top: .5rem; padding-top: .5rem; border-top: 0.5px solid var(--border); }
   .equipe-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: var(--radius-md); letter-spacing: .03em; }
-  .equipe-cc  { background: var(--info-bg);    color: var(--info-text);    border: 0.5px solid var(--info-border); }
-  .equipe-emp { background: var(--success-bg); color: var(--success-text); border: 0.5px solid var(--success-border); }
+  .equipe-cc    { background: var(--info-bg);    color: var(--info-text);    border: 0.5px solid var(--info-border); }
+  .equipe-emp   { background: var(--success-bg); color: var(--success-text); border: 0.5px solid var(--success-border); }
   .equipe-label { font-size: 11px; color: var(--text3); align-self: center; }
-
-  /* ── Tooltip ── */
   .tooltip-box {
-    display: none;
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--bg);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius-md);
-    padding: 6px 10px;
-    white-space: nowrap;
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--text2);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    z-index: 100;
-    pointer-events: none;
+    display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%); background: var(--bg); border: 0.5px solid var(--border2);
+    border-radius: var(--radius-md); padding: 6px 10px; white-space: nowrap;
+    font-size: 11px; font-weight: 400; color: var(--text2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 100; pointer-events: none;
   }
   .tooltip-box::after {
-    content: '';
-    position: absolute;
-    top: 100%; left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: var(--border2);
+    content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--border2);
   }
-  .tag:hover .tooltip-box,
-  .tag.tt-open .tooltip-box { display: block; }
-
+  .tag:hover .tooltip-box, .tag.tt-open .tooltip-box { display: block; }
   .escala-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
   .escala-name { font-size: 22px; font-weight: 500; }
   .escala-sub  { font-size: 13px; color: var(--text2); margin-top: 2px; }
@@ -112,8 +92,6 @@
   button.danger  { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
   .notice { font-size: 12px; color: var(--success-text); background: var(--success-bg); border: 0.5px solid var(--success-border); border-radius: var(--radius-md); padding: 6px 10px; margin-top: .5rem; display: none; }
   .mt6 { margin-top: .75rem; }
-
-  /* Histórico */
   .hist-section h3 { font-size: 14px; font-weight: 500; margin-bottom: .75rem; color: var(--text); }
   .hist-empty { font-size: 13px; color: var(--text3); font-style: italic; }
   .hist-item { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: .85rem 1rem; margin-bottom: .5rem; }
@@ -130,10 +108,58 @@
   .hist-col.old .hist-col-val { color: var(--text3); text-decoration: line-through; }
   .hist-col.new .hist-col-val { color: var(--text); }
   .hist-revert { margin-top: .5rem; }
+
+  /* ═══════════════ PAINEL DE EQUIPES ═══════════════ */
+  .equipe-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px; margin-bottom: .25rem;
+  }
+  .equipe-panel-header h3 { font-size: 14px; font-weight: 500; }
+  .equipe-panel-sub { font-size: 12px; color: var(--text3); margin-bottom: 1rem; }
+  .ep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 520px) { .ep-grid { grid-template-columns: 1fr; } }
+  .ep-col-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text3); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  }
+  .ep-col-label-left { display: flex; align-items: center; gap: 5px; }
+  .ep-section-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .ep-dot-cc  { background: #3a7fd4; }
+  .ep-dot-emp { background: #4a8c1c; }
+  .ep-btn-clear-small { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 6px; border: 0.5px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; font-family: var(--font); }
+  .ep-btn-clear-small:hover { background: var(--bg3); color: var(--text); }
+  .ep-person-card {
+    background: var(--bg); border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: .75rem .9rem; margin-bottom: 7px;
+  }
+  .ep-person-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .ep-person-name { font-size: 13px; font-weight: 600; }
+  .ep-progress-txt { font-size: 11px; color: var(--text3); }
+  .ep-progress-bar { height: 3px; background: var(--bg3); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
+  .ep-progress-fill { height: 100%; border-radius: 2px; transition: width .3s ease; background: #4caf50; }
+  .ep-progress-fill.cc-fill  { background: #3a7fd4; }
+  .ep-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ep-chip {
+    font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+    cursor: pointer; user-select: none; transition: opacity .15s, transform .1s;
+    border: 0.5px solid transparent;
+  }
+  .ep-chip:active { transform: scale(.95); }
+  .ep-chip.cc-chip  { background: var(--info-bg);    color: var(--info-text);    border-color: var(--info-border); }
+  .ep-chip.emp-chip { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+  .ep-chip.pending-chip { background: var(--warn-bg); color: var(--warn-text); border: 0.5px dashed var(--warn-border); }
+  .ep-chip.done {
+    background: var(--bg2) !important; color: var(--text3) !important;
+    border-color: var(--border) !important; text-decoration: line-through; opacity: .55;
+  }
+  .ep-chip.done::before { content: '✓ '; }
+  .ep-empty { font-size: 12px; color: var(--text3); font-style: italic; }
+  .ep-weekend-msg { font-size: 13px; color: var(--text3); font-style: italic; text-align: center; padding: 1.5rem 0; }
 </style>
 </head>
 <body>
 <div class="container">
+
   <div class="header">
     <span class="title">Painel de campanhas</span>
     <span class="day-badge" id="day-badge">—</span>
@@ -144,7 +170,6 @@
   </div>
 
   <div class="grid2">
-    <!-- Cartão de Crédito -->
     <div class="card">
       <div class="card-title">
         Cartão de crédito — disponíveis <span id="cc-day-label">hoje</span>
@@ -153,7 +178,6 @@
       <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="cc-equipe"></div>
     </div>
-    <!-- Empréstimo -->
     <div class="card">
       <div class="card-title">
         Empréstimo — disponíveis <span id="emp-day-label">hoje</span>
@@ -178,9 +202,9 @@
   <div class="update-area">
     <h3>Atualizar demandas</h3>
     <div class="section-label">EMP — lista de países (ex: MX - AR - US)</div>
-    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE"></textarea>
+    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE"></textarea>
     <div class="section-label mt6">CC — lista de países</div>
-    <textarea id="inp-cc"  rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR"></textarea>
+    <textarea id="inp-cc"  rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ"></textarea>
     <div class="btn-row">
       <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
       <button id="btn-reset-dem">Restaurar padrão</button>
@@ -191,7 +215,7 @@
   <div class="update-area">
     <h3>Atualizar escala de empréstimo</h3>
     <div class="section-label">Um responsável por dia (segunda a sexta)</div>
-    <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Pedro&#10;Quarta: Leo&#10;Quinta: Perereca&#10;Sexta: Ryan"></textarea>
+    <textarea id="inp-escala" rows="5" placeholder="Segunda: Luiza&#10;Terça: Pedro&#10;Quarta: Leo&#10;Quinta: Eduardo&#10;Sexta: Ryan"></textarea>
     <div class="btn-row">
       <button class="primary" id="btn-apply-esc">Aplicar escala</button>
       <button id="btn-reset-esc">Restaurar escala</button>
@@ -205,56 +229,94 @@
     <h3>📋 Histórico de modificações</h3>
     <div id="hist-list"><span class="hist-empty">Nenhuma modificação registrada ainda.</span></div>
   </div>
+
+  <!-- ══════════════════════════════════════════
+       PAINEL DE EQUIPES
+  ══════════════════════════════════════════ -->
+  <div class="divider"></div>
+  <div class="update-area">
+    <div class="equipe-panel-header">
+      <h3>✅ Painel de equipes — progresso do dia</h3>
+      <button class="danger" id="ep-btn-reset-all" style="font-size:12px;padding:5px 12px;">Limpar tudo hoje</button>
+    </div>
+    <div class="equipe-panel-sub" id="ep-date-label">Carregando...</div>
+    <div id="ep-content"><span class="hist-empty">Carregando...</span></div>
+  </div>
+
 </div>
 
 <script>
-// ── Dados fixos ───────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// DADOS FIXOS
+// ══════════════════════════════════════════════════════════
 const AVAIL = {
   BR:['seg','ter','qua','qui','sex'], NL:['seg','qua','sex'],
   US:['seg','ter','qua','qui','sex'], IN:['ter','qua','qui'],
-  MX:['seg','qua','sex'], AU:['seg','ter','qui'], TH:['seg','ter','qui'],
-  PH:['seg','qui','sex'], AR:['seg','qua','qui','sex'], CO:['seg','qua','qui','sex'],
-  CL:['seg','ter','qua','qui'], PE:['seg','ter','qua','qui'],
-  DE:['seg','ter','qua','qui','sex'], FR:['seg','ter','qua','qui','sex'],
-  BE:['seg','ter','qua','qui','sex'], TR:['seg','qua','sex'], VN:['seg','qua','sex'],
-  GR:['seg','ter','qui'], ID:['seg','ter','qui'], EG:['seg','ter','qui'],
-  JP:['seg','ter','qua','qui','sex'], AE:['seg','ter','qua','qui','sex']
+  MX:['seg','qua','sex'],            AU:['seg','ter','qui'],
+  TH:['seg','ter','qui'],            PH:['seg','qui','sex'],
+  AR:['seg','qua','qui','sex'],      CO:['seg','qua','qui','sex'],
+  CL:['seg','ter','qua','qui'],      PE:['seg','ter','qua','qui'],
+  DE:['seg','ter','qua','qui','sex'],FR:['seg','ter','qua','qui','sex'],
+  BE:['seg','ter','qua','qui','sex'],TR:['seg','qua','sex'],
+  VN:['seg','qua','sex'],            GR:['seg','ter','qui'],
+  ID:['seg','ter','qui'],            EG:['seg','ter','qui'],
+  JP:['seg','ter','qua','qui','sex'],AE:['seg','ter','qua','qui','sex'],
+  UK:['seg','qua','sex'],
+  KR:['seg','qua','sex'],
+  CZ:['seg','qua','sex']
 };
 
 const DOMAIN_MAP = {
-  BR:['vouquitar','cardfacil'],    NL:['dekredit'],
-  US:['gotallcards'],              IN:['wheresmycard'],
-  MX:['mejoresopciones','unum/mx'],AU:['unum/au'],
-  TH:['batkredit'],                PH:['unum/ph'],
-  AR:['tarjetasargentinas','solicitecartao'], CO:['tarjetaahora'],
-  CL:['unum/cl'],                  PE:['unum/pe'],
-  DE:['dekreditkarte','unum/de'],  FR:['unum/fr'],
-  BE:['antivora'],                 TR:['kredinow'],
-  VN:['ttdtm'],                    GR:['athivor'],
-  ID:['unum/id'],                  EG:['unum/eg'],
-  JP:['justgreatcards'],           AE:['moneycredithub']
+  BR:['vouquitar','cardfacil'],
+  NL:['dekredit'],
+  US:['gotallcards'],
+  IN:['wheresmycard'],
+  MX:['mejoresopciones','unum/mx'],
+  AU:['unum/au'],
+  TH:['batkredit'],
+  PH:['unum/ph'],
+  AR:['tarjetasargentinas','solicitecartao'],
+  CO:['tarjetaahora'],
+  CL:['unum/cl'],
+  PE:['unum/pe'],
+  DE:['dekreditkarte','unum/de'],
+  FR:['unum/fr'],
+  BE:['antivora'],
+  TR:['kredinow'],
+  VN:['ttdtm'],
+  GR:['athivor'],
+  ID:['unum/id'],
+  EG:['unum/eg'],
+  JP:['justgreatcards'],
+  AE:['moneycredithub'],
+  UK:['⚠ PENDENTE'],
+  KR:['⚠ PENDENTE'],
+  CZ:['⚠ PENDENTE']
 };
 
-// Pessoas fixas por produto
-const CC_PESSOAS   = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
-const EMP_FIXOS    = ['WALDIR','VICTOR'];
+const PENDING_COUNTRIES = new Set(['UK','KR','CZ']);
+
+const CC_PESSOAS = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
+const EMP_FIXOS  = ['WALDIR','VICTOR'];
 
 const DAY_MAP   = {0:null,1:'seg',2:'ter',3:'qua',4:'qui',5:'sex',6:null};
 const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta-feira',5:'Sexta-feira',0:'Domingo',6:'Sábado'};
 const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
 
 const DEFAULTS = {
-  emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE - BE',
-  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR',
-  escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Perereca',5:'Ryan'}
+  emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE',
+  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ',
+  escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Eduardo',5:'Ryan'}
 };
 
-let state      = JSON.parse(JSON.stringify(DEFAULTS));
-let history    = [];
+let state       = JSON.parse(JSON.stringify(DEFAULTS));
+let history     = [];
+let doneState   = {};
 let selectedDow = new Date().getDay();
 
 // ── Helpers ───────────────────────────────────────────────
 function getTodayDow() { return new Date().getDay(); }
+function todayKey()    { return new Date().toISOString().slice(0,10); }
 function parseList(str) {
   return str.toUpperCase().split(/[\s,\-\/]+/).map(s => s.trim()).filter(s => s.length >= 2 && s.length <= 3);
 }
@@ -270,7 +332,7 @@ function escalaToStr(esc) {
   return [1,2,3,4,5].map(d => `${DAY_SHORT[d]}: ${esc[d]||'—'}`).join(' | ');
 }
 
-// ── window.storage (compartilhado) ───────────────────────
+// ── window.storage ────────────────────────────────────────
 async function storageGet(key) {
   try {
     const r = await window.storage.get(key, true);
@@ -291,24 +353,29 @@ async function loadAll() {
   }
   const savedHist = await storageGet('painel-historico');
   if (Array.isArray(savedHist)) history = savedHist;
+  const savedDone = await storageGet('equipe-done-' + todayKey());
+  if (savedDone && typeof savedDone === 'object') doneState = savedDone;
+  else doneState = {};
   setSyncStatus('ok', `Sincronizado às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
   renderAll();
   renderHistory();
+  renderEquipePanel();
 }
 
 async function saveState(patch) {
-  // Merge patch into current state
   if (patch.emp    !== undefined) state.emp    = patch.emp;
   if (patch.cc     !== undefined) state.cc     = patch.cc;
   if (patch.escala !== undefined) Object.assign(state.escala, patch.escala);
-  await storageSet('painel-state', {
-    emp: state.emp, cc: state.cc, escala: state.escala
-  });
+  await storageSet('painel-state', { emp: state.emp, cc: state.cc, escala: state.escala });
   setSyncStatus('ok', `Sincronizado às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
 }
 
+async function saveDone() {
+  await storageSet('equipe-done-' + todayKey(), doneState);
+}
+
 function setSyncStatus(status, label) {
-  document.getElementById('sync-dot').className  = 'sync-dot ' + status;
+  document.getElementById('sync-dot').className    = 'sync-dot ' + status;
   document.getElementById('sync-label').textContent = label;
 }
 
@@ -328,7 +395,7 @@ function renderHistory() {
   const sorted = history.slice().reverse().slice(0, 20);
   el.innerHTML = sorted.map((it, idx) => {
     const typeLabel = it.type === 'emp' ? 'Empréstimo' : it.type === 'cc' ? 'Cartão de crédito' : 'Escala';
-    const isFirst = idx === 0;
+    const isFirst   = idx === 0;
     return `
     <div class="hist-item">
       <div class="hist-header">
@@ -375,13 +442,13 @@ async function revertLast(type, oldVal) {
   renderAll();
 }
 
-// ── Render tags + tooltip ─────────────────────────────────
+// ── Tags com tooltip ──────────────────────────────────────
 function makeTagEl(id, cls) {
-  const domains = (DOMAIN_MAP[id] || []).join(', ');
-  const span = document.createElement('span');
-  span.className = `tag ${cls}`;
-  span.innerHTML = `${id}${domains ? `<span class="tooltip-box">${domains}</span>` : ''}`;
-  // Click para fixar tooltip
+  const domains   = (DOMAIN_MAP[id] || []).join(', ');
+  const isPending = PENDING_COUNTRIES.has(id);
+  const span      = document.createElement('span');
+  span.className  = `tag ${isPending ? 'tag-pending' : cls}`;
+  span.innerHTML  = `${id}${isPending ? ' ⚠' : ''}${domains ? `<span class="tooltip-box">${domains}</span>` : ''}`;
   span.addEventListener('click', e => {
     e.stopPropagation();
     const isOpen = span.classList.contains('tt-open');
@@ -393,107 +460,215 @@ function makeTagEl(id, cls) {
 
 // ── Render principal ──────────────────────────────────────
 function renderTags() {
-  const dow      = selectedDow;
-  const key      = DAY_MAP[dow];
-  const todayDow = getTodayDow();
-  const isToday  = dow === todayDow;
+  const dow       = selectedDow;
+  const key       = DAY_MAP[dow];
+  const todayDow  = getTodayDow();
+  const isToday   = dow === todayDow;
   const labelText = isToday ? 'hoje' : (DAY_SHORT[dow] ? 'na ' + DAY_SHORT[dow] : '—');
 
   document.getElementById('cc-day-label').textContent  = labelText;
   document.getElementById('emp-day-label').textContent = labelText;
 
-  const badge = document.getElementById('day-badge');
+  const badge     = document.getElementById('day-badge');
   badge.textContent = DAY_NAMES[dow] || 'Fim de semana';
   badge.className   = 'day-badge' + (isToday ? '' : ' preview');
 
   const empList = parseList(state.emp);
   const ccList  = parseList(state.cc);
-
-  function filterAvail(list) {
-    return key ? list.filter(c => AVAIL[c]?.includes(key)) : [];
-  }
-
+  function filterAvail(list) { return key ? list.filter(c => AVAIL[c]?.includes(key)) : []; }
   const empAvail = filterAvail(empList);
   const ccAvail  = filterAvail(ccList);
 
-  // Renderiza países
   function renderTagList(ids, cls, cId, tId) {
-    const c = document.getElementById(cId);
-    const t = document.getElementById(tId);
+    const c = document.getElementById(cId), t = document.getElementById(tId);
     t.textContent = ids.length;
-    c.innerHTML = '';
-    if (ids.length) {
-      ids.forEach(id => c.appendChild(makeTagEl(id, cls)));
-    } else {
-      c.innerHTML = `<span class="empty">${key ? 'Nenhum país disponível' : 'Fim de semana — sem operações'}</span>`;
-    }
+    c.innerHTML   = '';
+    if (ids.length) ids.forEach(id => c.appendChild(makeTagEl(id, cls)));
+    else c.innerHTML = `<span class="empty">${key ? 'Nenhum país disponível' : 'Fim de semana — sem operações'}</span>`;
   }
   renderTagList(ccAvail,  'tag-cc',  'cc-tags',  'cc-total');
   renderTagList(empAvail, 'tag-emp', 'emp-tags', 'emp-total');
 
-  // ── Equipe do dia ─────────────────────────────────────
-  // EMP: WALDIR + VICTOR + pessoa da escala do dia
-  // CC: CC_PESSOAS - pessoa da escala do dia
-  const escalaPessoa = key ? (state.escala[dow] || null) : null;
-  const escalaNome   = escalaPessoa ? escalaPessoa.toUpperCase() : null;
+  const escalaNome = (key && state.escala[dow]) ? state.escala[dow].toUpperCase() : null;
+  const empEquipe  = [...EMP_FIXOS, ...(escalaNome ? [escalaNome] : [])];
+  const ccEquipe   = CC_PESSOAS.filter(p => p !== escalaNome);
 
-  const empEquipe = [...EMP_FIXOS];
-  if (escalaNome) empEquipe.push(escalaNome);
-
-  const ccEquipe = CC_PESSOAS.filter(p => p !== escalaNome);
-
-  function renderEquipe(pessoas, cls, elId) {
+  function renderEquipeBadges(pessoas, cls, elId) {
     const el = document.getElementById(elId);
     el.innerHTML = '';
-    if (!key) return; // fim de semana — sem equipe
+    if (!key) return;
     const lbl = document.createElement('span');
-    lbl.className = 'equipe-label';
-    lbl.textContent = 'Equipe:';
+    lbl.className = 'equipe-label'; lbl.textContent = 'Equipe:';
     el.appendChild(lbl);
     pessoas.forEach(p => {
       const b = document.createElement('span');
-      b.className = `equipe-badge ${cls}`;
-      b.textContent = p;
+      b.className = `equipe-badge ${cls}`; b.textContent = p;
       el.appendChild(b);
     });
   }
-  renderEquipe(ccEquipe,  'equipe-cc',  'cc-equipe');
-  renderEquipe(empEquipe, 'equipe-emp', 'emp-equipe');
+  renderEquipeBadges(ccEquipe,  'equipe-cc',  'cc-equipe');
+  renderEquipeBadges(empEquipe, 'equipe-emp', 'emp-equipe');
 }
 
 function renderEscala() {
-  const todayDow = getTodayDow();
-  const key      = DAY_MAP[selectedDow];
+  const todayDow = getTodayDow(), key = DAY_MAP[selectedDow];
   document.getElementById('hoje-pessoa').textContent = (key && state.escala[selectedDow]) ? state.escala[selectedDow] : '—';
   document.getElementById('hoje-label').textContent  = selectedDow === todayDow
     ? 'responsável hoje'
     : (DAY_SHORT[selectedDow] ? 'responsável na ' + DAY_SHORT[selectedDow] : '(fim de semana)');
-
   const ew = document.getElementById('escala-week');
   ew.innerHTML = '';
   [1,2,3,4,5].forEach(d => {
     const div = document.createElement('div');
     div.className = 'escala-day' + (d === todayDow ? ' today' : '') + (d === selectedDow ? ' selected' : '');
-    div.innerHTML  = `<div class="d-name">${DAY_SHORT[d]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
-    div.onclick    = () => { selectedDow = d; renderAll(); };
+    div.innerHTML = `<div class="d-name">${DAY_SHORT[d]}</div><div class="d-person">${state.escala[d]||'—'}</div>`;
+    div.onclick   = () => { selectedDow = d; renderAll(); renderEquipePanel(); };
     ew.appendChild(div);
   });
 }
 
 function renderAll() { renderEscala(); renderTags(); }
 
-// ── Fechar tooltips ao clicar fora ────────────────────────
 document.addEventListener('click', () => {
   document.querySelectorAll('.tag.tt-open').forEach(t => t.classList.remove('tt-open'));
 });
 
+// ══════════════════════════════════════════════════════════
+// PAINEL DE EQUIPES
+// ══════════════════════════════════════════════════════════
+function doneKey(tipo, nome, pais) { return `${tipo}__${nome}__${pais}`; }
+
+async function toggleDone(tipo, nome, pais) {
+  const k = doneKey(tipo, nome, pais);
+  if (doneState[k]) delete doneState[k]; else doneState[k] = true;
+  await saveDone();
+  renderEquipePanel();
+}
+
+function buildPersonCard(nome, paises, tipo) {
+  const chipBase = tipo === 'cc' ? 'cc-chip' : 'emp-chip';
+  const barFill  = tipo === 'cc' ? 'cc-fill'  : '';
+  const total    = paises.length;
+  const doneCnt  = paises.filter(p => doneState[doneKey(tipo, nome, p)]).length;
+  const pct      = total > 0 ? Math.round((doneCnt / total) * 100) : 0;
+
+  const card = document.createElement('div');
+  card.className = 'ep-person-card';
+
+  // Head
+  const head = document.createElement('div');
+  head.className = 'ep-person-head';
+  head.innerHTML = `<span class="ep-person-name">${nome}</span><span class="ep-progress-txt">${doneCnt}/${total}</span>`;
+  card.appendChild(head);
+
+  // Progress bar
+  const barWrap = document.createElement('div');
+  barWrap.className = 'ep-progress-bar';
+  barWrap.innerHTML = `<div class="ep-progress-fill ${barFill}" style="width:${pct}%"></div>`;
+  card.appendChild(barWrap);
+
+  // Chips
+  const chips = document.createElement('div');
+  chips.className = 'ep-chips';
+  if (!paises.length) {
+    chips.innerHTML = '<span class="ep-empty">Nenhum país disponível</span>';
+  } else {
+    paises.forEach(pais => {
+      const isPending = PENDING_COUNTRIES.has(pais);
+      const isDone    = !!doneState[doneKey(tipo, nome, pais)];
+      const chip      = document.createElement('span');
+      const baseCls   = isPending ? 'pending-chip' : chipBase;
+      chip.className  = `ep-chip ${baseCls}${isDone ? ' done' : ''}`;
+      chip.textContent = pais + (isPending ? ' ⚠' : '');
+      const doms = DOMAIN_MAP[pais];
+      if (doms) chip.title = doms.join(', ');
+      chip.onclick = () => toggleDone(tipo, nome, pais);
+      chips.appendChild(chip);
+    });
+  }
+  card.appendChild(chips);
+  return card;
+}
+
+function renderEquipePanel() {
+  const dow      = selectedDow;
+  const key      = DAY_MAP[dow];
+  const todayDow = getTodayDow();
+  const isToday  = dow === todayDow;
+
+  const dateFmt = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('ep-date-label').textContent = isToday
+    ? `Hoje — ${dateFmt}`
+    : `Visualizando: ${DAY_NAMES[dow] || 'Fim de semana'} — clique no badge acima para voltar a hoje`;
+
+  const container = document.getElementById('ep-content');
+  container.innerHTML = '';
+
+  if (!key) {
+    container.innerHTML = '<span class="ep-weekend-msg">🌴 Fim de semana — sem operações</span>';
+    return;
+  }
+
+  const filterAv  = list => list.filter(c => AVAIL[c]?.includes(key));
+  const empAvail  = filterAv(parseList(state.emp));
+  const ccAvail   = filterAv(parseList(state.cc));
+
+  const escalaNome = state.escala[dow] ? state.escala[dow].toUpperCase() : null;
+  const ccEquipe   = CC_PESSOAS.filter(p => p !== escalaNome);
+  const empEquipe  = [...EMP_FIXOS, ...(escalaNome ? [escalaNome] : [])];
+
+  const grid = document.createElement('div');
+  grid.className = 'ep-grid';
+
+  // ── CC ─────────────────────────────────────────────────
+  const ccCol = document.createElement('div');
+  const ccLbl = document.createElement('div');
+  ccLbl.className = 'ep-col-label';
+  ccLbl.innerHTML = `
+    <span class="ep-col-label-left"><span class="ep-section-dot ep-dot-cc"></span> Cartão de crédito</span>
+    <button class="ep-btn-clear-small" id="ep-clear-cc">Limpar</button>`;
+  ccCol.appendChild(ccLbl);
+  ccEquipe.forEach(nome => ccCol.appendChild(buildPersonCard(nome, ccAvail, 'cc')));
+
+  // ── EMP ────────────────────────────────────────────────
+  const empCol = document.createElement('div');
+  const empLbl = document.createElement('div');
+  empLbl.className = 'ep-col-label';
+  empLbl.innerHTML = `
+    <span class="ep-col-label-left"><span class="ep-section-dot ep-dot-emp"></span> Empréstimo</span>
+    <button class="ep-btn-clear-small" id="ep-clear-emp">Limpar</button>`;
+  empCol.appendChild(empLbl);
+  empEquipe.forEach(nome => empCol.appendChild(buildPersonCard(nome, empAvail, 'emp')));
+
+  grid.appendChild(ccCol);
+  grid.appendChild(empCol);
+  container.appendChild(grid);
+
+  // Handlers dos botões de limpar por seção (após inserção no DOM)
+  document.getElementById('ep-clear-cc').onclick = async () => {
+    ccEquipe.forEach(n => ccAvail.forEach(p => { delete doneState[doneKey('cc', n, p)]; }));
+    await saveDone(); renderEquipePanel();
+  };
+  document.getElementById('ep-clear-emp').onclick = async () => {
+    empEquipe.forEach(n => empAvail.forEach(p => { delete doneState[doneKey('emp', n, p)]; }));
+    await saveDone(); renderEquipePanel();
+  };
+}
+
 // ── Botões ────────────────────────────────────────────────
+document.getElementById('ep-btn-reset-all').onclick = async function() {
+  if (!confirm('Limpar todo o progresso de hoje?')) return;
+  doneState = {};
+  await saveDone();
+  renderEquipePanel();
+};
+
 document.getElementById('btn-apply-dem').onclick = async function() {
   const e = document.getElementById('inp-emp').value.trim();
   const c = document.getElementById('inp-cc').value.trim();
   if (e) { await pushHistory('emp', state.emp, e); await saveState({emp: e}); showNotice('notice-dem'); }
   if (c) { await pushHistory('cc',  state.cc,  c); await saveState({cc: c});  showNotice('notice-dem'); }
-  renderAll();
+  renderAll(); renderEquipePanel();
 };
 
 document.getElementById('btn-reset-dem').onclick = async function() {
@@ -502,7 +677,7 @@ document.getElementById('btn-reset-dem').onclick = async function() {
   await pushHistory('emp', state.emp, DEFAULTS.emp);
   await pushHistory('cc',  state.cc,  DEFAULTS.cc);
   await saveState({emp: DEFAULTS.emp, cc: DEFAULTS.cc});
-  renderAll();
+  renderAll(); renderEquipePanel();
 };
 
 function parseEscala(str) {
@@ -530,7 +705,7 @@ document.getElementById('btn-apply-esc').onclick = async function() {
     await pushHistory('escala', oldStr, newStr);
     await saveState({escala: parsed});
     showNotice('notice-esc');
-    renderAll();
+    renderAll(); renderEquipePanel();
   } else {
     alert('Formato não reconhecido.\nUse:\nSegunda: Nome\nTerça: Nome\netc.');
   }
@@ -542,15 +717,15 @@ document.getElementById('btn-reset-esc').onclick = async function() {
   const newStr = escalaToStr(DEFAULTS.escala);
   await pushHistory('escala', oldStr, newStr);
   await saveState({escala: DEFAULTS.escala});
-  renderAll();
+  renderAll(); renderEquipePanel();
 };
 
 document.getElementById('day-badge').onclick = function() {
   selectedDow = getTodayDow();
-  renderAll();
+  renderAll(); renderEquipePanel();
 };
 
-// ── Polling para sincronização em tempo real (30s) ───────
+// ── Polling 30s ───────────────────────────────────────────
 setInterval(async () => {
   const saved = await storageGet('painel-state');
   if (saved) {
@@ -560,9 +735,10 @@ setInterval(async () => {
   }
   const savedHist = await storageGet('painel-historico');
   if (Array.isArray(savedHist)) history = savedHist;
+  const savedDone = await storageGet('equipe-done-' + todayKey());
+  if (savedDone && typeof savedDone === 'object') doneState = savedDone;
   setSyncStatus('ok', `Sincronizado às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
-  renderAll();
-  renderHistory();
+  renderAll(); renderHistory(); renderEquipePanel();
 }, 30000);
 
 // ── Init ──────────────────────────────────────────────────
