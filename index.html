@@ -362,15 +362,36 @@ function escalaToStr(esc) {
   return [1,2,3,4,5].map(d => `${DAY_SHORT[d]}: ${esc[d]||'—'}`).join(' | ');
 }
 
-// ── window.storage ────────────────────────────────────────
+// ── window.storage + localStorage (dual-write) ───────────
+// window.storage  → compartilhado entre todos os usuários
+// localStorage    → fallback garantido no reload da página
 async function storageGet(key) {
+  // Tenta window.storage primeiro (compartilhado)
   try {
-    const r = await window.storage.get(key, true);
-    return r ? JSON.parse(r.value) : null;
-  } catch { return null; }
+    if (window.storage) {
+      const r = await window.storage.get(key, true);
+      if (r && r.value) {
+        const parsed = JSON.parse(r.value);
+        // Espelha no localStorage para garantir persistência local
+        try { localStorage.setItem(key, r.value); } catch(_) {}
+        return parsed;
+      }
+    }
+  } catch(_) {}
+  // Fallback: localStorage
+  try {
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
+  } catch(_) { return null; }
 }
+
 async function storageSet(key, val) {
-  try { await window.storage.set(key, JSON.stringify(val), true); } catch(e) { console.error(e); }
+  const str = JSON.stringify(val);
+  // Salva nos dois simultaneamente
+  try {
+    if (window.storage) await window.storage.set(key, str, true);
+  } catch(_) {}
+  try { localStorage.setItem(key, str); } catch(_) {}
 }
 
 async function loadAll() {
@@ -405,7 +426,13 @@ async function saveState(patch) {
 }
 
 async function saveDone() {
-  await storageSet(DONE_KEY, { data: doneState, ts: Date.now() });
+  // Preserva o ts original (hora da 1ª marcação do ciclo)
+  // para que o TTL de 48h conte a partir do início, não de cada clique
+  const existing = await storageGet(DONE_KEY);
+  const ts = (existing && existing.ts && (Date.now() - existing.ts) < DONE_TTL)
+    ? existing.ts
+    : Date.now();
+  await storageSet(DONE_KEY, { data: doneState, ts });
 }
 
 function setSyncStatus(status, label) {
