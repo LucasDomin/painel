@@ -43,15 +43,6 @@
   .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
   .card-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .total-badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: var(--radius-md); background: var(--bg2); color: var(--text2); }
-  .copy-btn {
-    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
-    border: 0.5px solid var(--border); background: transparent; color: var(--text3);
-    cursor: pointer; font-family: var(--font); letter-spacing: .02em;
-    transition: background .15s, color .15s, border-color .15s;
-    margin-left: auto;
-  }
-  .copy-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
-  .copy-btn.copied { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
   .tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
   .tag { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-md); position: relative; cursor: default; user-select: none; }
   .tag-cc      { background: #e6f1fb; color: #0c447c; }
@@ -164,23 +155,6 @@
   .ep-chip.done::before { content: '✓ '; }
   .ep-empty { font-size: 12px; color: var(--text3); font-style: italic; }
   .ep-weekend-msg { font-size: 13px; color: var(--text3); font-style: italic; text-align: center; padding: 1.5rem 0; }
-  .ep-done-banner {
-    font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-    color: var(--success-text); background: var(--success-bg);
-    border: 0.5px solid var(--success-border); border-radius: var(--radius-md);
-    padding: 4px 10px; text-align: center; margin-bottom: 6px;
-  }
-  .ep-person-card.all-done {
-    border-color: var(--success-border);
-    background: linear-gradient(135deg, var(--bg) 80%, var(--success-bg) 100%);
-  }
-
-  /* ═══════════════ BADGE DE VERSÃO ═══════════════ */
-  .version-note {
-    font-size: 11px; color: var(--text3); text-align: right;
-    margin-top: 2rem; padding-top: .5rem;
-    border-top: 0.5px solid var(--border);
-  }
 </style>
 </head>
 <body>
@@ -200,7 +174,6 @@
       <div class="card-title">
         Cartão de crédito — disponíveis <span id="cc-day-label">hoje</span>
         <span class="total-badge" id="cc-total">0</span>
-        <button class="copy-btn" id="btn-copy-cc" title="Copiar países">📋</button>
       </div>
       <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="cc-equipe"></div>
@@ -209,7 +182,6 @@
       <div class="card-title">
         Empréstimo — disponíveis <span id="emp-day-label">hoje</span>
         <span class="total-badge" id="emp-total">0</span>
-        <button class="copy-btn" id="btn-copy-emp" title="Copiar países">📋</button>
       </div>
       <div class="tag-wrap" id="emp-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="emp-equipe"></div>
@@ -229,10 +201,10 @@
 
   <div class="update-area">
     <h3>Atualizar demandas</h3>
-    <div class="section-label">CC — lista de países</div>
-    <textarea id="inp-cc"  rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ"></textarea>
-    <div class="section-label mt6">EMP — lista de países (ex: MX - AR - US)</div>
-    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE"></textarea>
+    <div class="section-label">EMP — lista de países (ex: MX - AR - US)</div>
+    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - CL - CO - PE - FR - EG - GR - UK - CZ"></textarea>
+    <div class="section-label mt6">CC — lista de países</div>
+    <textarea id="inp-cc"  rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ - GR - ID"></textarea>
     <div class="btn-row">
       <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
       <button id="btn-reset-dem">Restaurar padrão</button>
@@ -271,58 +243,44 @@
     <div id="ep-content"><span class="hist-empty">Carregando...</span></div>
   </div>
 
-  <div class="version-note">Escala atualizada em 23/03/2025 — v2</div>
-
 </div>
 
 <script>
 // ══════════════════════════════════════════════════════════
-// DADOS FIXOS — AVAIL atualizado conforme escala 23/03/2025
-// Rosa = indisponível | Branco = disponível
-// Nota: Segunda-feira removida da maioria dos países nesta revisão.
-// IN (Índia) sem dias ativos na nova escala — mantido com array
-// vazio para não quebrar referências futuras.
+// DADOS FIXOS
 // ══════════════════════════════════════════════════════════
+// AVAIL atualizado conforme tabela de escala (imagem anexada)
 const AVAIL = {
-  // ── Americas & Oceania ─────────────────────────────────
-  BR: ['ter','qui','sex'],          // seg e qua removidas
-  NL: ['ter','qua','sex'],          // seg→ter
-  US: ['ter','qua','qui','sex'],    // seg removida
-  IN: [],                           // sem dias ativos na nova escala
-  MX: ['seg','qua','sex'],          // inalterado ✓
-  AU: ['ter','qui'],                // seg removida
-  TH: ['ter','qui'],                // seg removida
-  PH: ['seg','qui','sex'],          // inalterado ✓
-  AR: ['seg','qua','qui','sex'],    // inalterado ✓
-  CO: ['seg','qua','qui','sex'],    // inalterado ✓
-  CL: ['ter','qua','qui'],          // seg removida
-  PE: ['ter','qua','qui'],          // seg removida
-
-  // ── Europa ─────────────────────────────────────────────
-  DE: ['ter','qua','qui'],          // seg e sex removidas
-  FR: ['seg','qua','qui','sex'],    // ter removida
-  BE: ['seg','qua','qui','sex'],    // ter removida
-  TR: ['seg','qua','sex'],          // inalterado ✓
-  VN: ['seg','qua','sex'],          // inalterado ✓
-  GR: ['ter','qui'],                // seg removida
-  ID: ['ter','qui'],                // seg removida
-  EG: ['seg','ter','qui'],          // inalterado ✓
-
-  // ── Ásia & Oriente Médio ───────────────────────────────
-  JP: ['seg','qua','sex'],          // ter e qui removidas
-  AE: ['ter','qui'],                // seg, qua e sex removidas
-
-  // ── Pendentes (domínio ainda não configurado) ──────────
-  UK: ['seg','qua','sex'],          // inalterado ✓
-  KR: ['seg','qua','sex'],          // inalterado ✓
-  CZ: ['seg','qua','sex'],          // inalterado ✓
+  BR:['ter','qui','sex'],            // removido seg e qua
+  NL:['ter','qua','sex'],            // removido seg, adicionado ter
+  US:['ter','qua','qui','sex'],      // removido seg
+  MX:['seg','qua','sex'],
+  AU:['ter','qui'],                  // removido seg
+  TH:['ter','qui'],                  // removido seg
+  CZ:['seg','qua','sex'],
+  PH:['seg','qui','sex'],
+  AR:['seg','qua','qui','sex'],
+  UK:['seg','qua','sex'],
+  CO:['seg','qua','qui','sex'],
+  CL:['ter','qua','qui'],            // removido seg
+  PE:['ter','qua','qui'],            // removido seg
+  DE:['ter','qua','qui'],            // removido seg e sex
+  KR:['seg','qua','sex'],
+  FR:['seg','qua','qui','sex'],      // removido ter
+  BE:['seg','qua','qui','sex'],      // removido ter
+  TR:['seg','qua','sex'],
+  VN:['seg','qua','sex'],
+  GR:['ter','qui'],                  // removido seg
+  ID:['ter','qui'],                  // removido seg
+  EG:['seg','ter','qui'],
+  JP:['seg','qua','sex'],            // removido ter e qui
+  AE:['ter','qui']                   // removido seg, qua e sex
 };
 
 const DOMAIN_MAP = {
   BR:['vouquitar','cardfacil'],
   NL:['dekredit'],
   US:['gotallcards'],
-  IN:['wheresmycard'],
   MX:['mejoresopciones','unum/mx'],
   AU:['unum/au'],
   TH:['batkredit'],
@@ -341,12 +299,12 @@ const DOMAIN_MAP = {
   EG:['unum/eg'],
   JP:['justgreatcards'],
   AE:['moneycredithub'],
-  UK:['⚠ PENDENTE'],
-  KR:['⚠ PENDENTE'],
+  UK:['unum/uk'],
+  KR:['unum/kr'],
   CZ:['unum/cz']
 };
 
-const PENDING_COUNTRIES = new Set(['UK','KR']);
+const PENDING_COUNTRIES = new Set([]);
 
 const CC_PESSOAS = ['LUIZA','LUCAS','LÉO','RYAN','PEDRO','EDUARDO'];
 const EMP_FIXOS  = ['WALDIR','VICTOR'];
@@ -356,8 +314,8 @@ const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta
 const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
 
 const DEFAULTS = {
-  emp: 'MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE',
-  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ',
+  emp: 'MX - AR - US - AU - VN - CL - CO - PE - FR - EG - GR - UK - CZ',
+  cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ - GR - ID',
   escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Eduardo',5:'Ryan'}
 };
 
@@ -535,31 +493,11 @@ function renderTags() {
     const c = document.getElementById(cId), t = document.getElementById(tId);
     t.textContent = ids.length;
     c.innerHTML   = '';
-    if (ids.length) {
-      const sorted = [...ids.filter(id => !PENDING_COUNTRIES.has(id)), ...ids.filter(id => PENDING_COUNTRIES.has(id))];
-      sorted.forEach(id => c.appendChild(makeTagEl(id, cls)));
-    }
+    if (ids.length) ids.forEach(id => c.appendChild(makeTagEl(id, cls)));
     else c.innerHTML = `<span class="empty">${key ? 'Nenhum país disponível' : 'Fim de semana — sem operações'}</span>`;
   }
   renderTagList(ccAvail,  'tag-cc',  'cc-tags',  'cc-total');
   renderTagList(empAvail, 'tag-emp', 'emp-tags', 'emp-total');
-
-  // ── Botões de cópia ───────────────────────────────────
-  function bindCopyBtn(btnId, ids) {
-    const btn = document.getElementById(btnId);
-    if (!btn) return;
-    btn.onclick = () => {
-      if (!ids.length) return;
-      const text = ids.join(' - ');
-      navigator.clipboard.writeText(text).then(() => {
-        btn.textContent = '✓';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 2000);
-      });
-    };
-  }
-  bindCopyBtn('btn-copy-cc',  ccAvail);
-  bindCopyBtn('btn-copy-emp', empAvail);
 
   const escalaNome = (key && state.escala[dow]) ? state.escala[dow].toUpperCase() : null;
   const empEquipe  = [...EMP_FIXOS, ...(escalaNome ? [escalaNome] : [])];
@@ -627,25 +565,19 @@ function buildPersonCard(nome, paises, tipo) {
   const card = document.createElement('div');
   card.className = 'ep-person-card';
 
-  // Banner "dia concluído" — aparece quando todos os países estão marcados
-  if (total > 0 && doneCnt === total) {
-    const banner = document.createElement('div');
-    banner.className = 'ep-done-banner';
-    banner.textContent = '🎉 dia concluído';
-    card.appendChild(banner);
-    card.classList.add('all-done');
-  }
-
+  // Head
   const head = document.createElement('div');
   head.className = 'ep-person-head';
   head.innerHTML = `<span class="ep-person-name">${nome}</span><span class="ep-progress-txt">${doneCnt}/${total}</span>`;
   card.appendChild(head);
 
+  // Progress bar
   const barWrap = document.createElement('div');
   barWrap.className = 'ep-progress-bar';
   barWrap.innerHTML = `<div class="ep-progress-fill ${barFill}" style="width:${pct}%"></div>`;
   card.appendChild(barWrap);
 
+  // Chips
   const chips = document.createElement('div');
   chips.className = 'ep-chips';
   if (!paises.length) {
@@ -722,6 +654,7 @@ function renderEquipePanel() {
   grid.appendChild(empCol);
   container.appendChild(grid);
 
+  // Handlers dos botões de limpar por seção (após inserção no DOM)
   document.getElementById('ep-clear-cc').onclick = async () => {
     ccEquipe.forEach(n => ccAvail.forEach(p => { delete doneState[doneKey('cc', n, p)]; }));
     await saveDone(); renderEquipePanel();
