@@ -164,6 +164,16 @@
   .ep-chip.done::before { content: '✓ '; }
   .ep-empty { font-size: 12px; color: var(--text3); font-style: italic; }
   .ep-weekend-msg { font-size: 13px; color: var(--text3); font-style: italic; text-align: center; padding: 1.5rem 0; }
+  .ep-done-banner {
+    font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--success-text); background: var(--success-bg);
+    border: 0.5px solid var(--success-border); border-radius: var(--radius-md);
+    padding: 4px 10px; text-align: center; margin-bottom: 6px;
+  }
+  .ep-person-card.all-done {
+    border-color: var(--success-border);
+    background: linear-gradient(135deg, var(--bg) 80%, var(--success-bg) 100%);
+  }
 
   /* ═══════════════ BADGE DE VERSÃO ═══════════════ */
   .version-note {
@@ -190,7 +200,7 @@
       <div class="card-title">
         Cartão de crédito — disponíveis <span id="cc-day-label">hoje</span>
         <span class="total-badge" id="cc-total">0</span>
-        <button class="copy-btn" id="btn-copy-cc" title="Copiar países">📋 copiar</button>
+        <button class="copy-btn" id="btn-copy-cc" title="Copiar países">📋</button>
       </div>
       <div class="tag-wrap" id="cc-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="cc-equipe"></div>
@@ -199,7 +209,7 @@
       <div class="card-title">
         Empréstimo — disponíveis <span id="emp-day-label">hoje</span>
         <span class="total-badge" id="emp-total">0</span>
-        <button class="copy-btn" id="btn-copy-emp" title="Copiar países">📋 copiar</button>
+        <button class="copy-btn" id="btn-copy-emp" title="Copiar países">📋</button>
       </div>
       <div class="tag-wrap" id="emp-tags"><span class="empty">Carregando...</span></div>
       <div class="equipe-wrap" id="emp-equipe"></div>
@@ -219,10 +229,10 @@
 
   <div class="update-area">
     <h3>Atualizar demandas</h3>
-    <div class="section-label">EMP — lista de países (ex: MX - AR - US)</div>
-    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE"></textarea>
-    <div class="section-label mt6">CC — lista de países</div>
+    <div class="section-label">CC — lista de países</div>
     <textarea id="inp-cc"  rows="2" placeholder="BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ"></textarea>
+    <div class="section-label mt6">EMP — lista de países (ex: MX - AR - US)</div>
+    <textarea id="inp-emp" rows="2" placeholder="MX - AR - US - AU - VN - PH - CL - GR - CO - AE - PE"></textarea>
     <div class="btn-row">
       <button class="primary" id="btn-apply-dem">Aplicar demandas</button>
       <button id="btn-reset-dem">Restaurar padrão</button>
@@ -525,7 +535,10 @@ function renderTags() {
     const c = document.getElementById(cId), t = document.getElementById(tId);
     t.textContent = ids.length;
     c.innerHTML   = '';
-    if (ids.length) ids.forEach(id => c.appendChild(makeTagEl(id, cls)));
+    if (ids.length) {
+      const sorted = [...ids.filter(id => !PENDING_COUNTRIES.has(id)), ...ids.filter(id => PENDING_COUNTRIES.has(id))];
+      sorted.forEach(id => c.appendChild(makeTagEl(id, cls)));
+    }
     else c.innerHTML = `<span class="empty">${key ? 'Nenhum país disponível' : 'Fim de semana — sem operações'}</span>`;
   }
   renderTagList(ccAvail,  'tag-cc',  'cc-tags',  'cc-total');
@@ -539,9 +552,9 @@ function renderTags() {
       if (!ids.length) return;
       const text = ids.join(' - ');
       navigator.clipboard.writeText(text).then(() => {
-        btn.textContent = '✓ copiado!';
+        btn.textContent = '✓';
         btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = '📋 copiar'; btn.classList.remove('copied'); }, 2000);
+        setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 2000);
       });
     };
   }
@@ -613,6 +626,15 @@ function buildPersonCard(nome, paises, tipo) {
 
   const card = document.createElement('div');
   card.className = 'ep-person-card';
+
+  // Banner "dia concluído" — aparece quando todos os países estão marcados
+  if (total > 0 && doneCnt === total) {
+    const banner = document.createElement('div');
+    banner.className = 'ep-done-banner';
+    banner.textContent = '🎉 dia concluído';
+    card.appendChild(banner);
+    card.classList.add('all-done');
+  }
 
   const head = document.createElement('div');
   head.className = 'ep-person-head';
