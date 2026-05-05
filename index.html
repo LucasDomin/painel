@@ -937,42 +937,53 @@ setupCopyBtn('btn-copy-emp', 'emp-tags');
 
 // ── Init ──────────────────────────────────────────────────
 loadAll();
- // ============ SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA ============
-    function checkForUpdates() {
-        fetch('version.json?_t=' + new Date().getTime())
-            .then(response => response.json())
-            .then(data => {
-                if (data.version > APP_VERSION) {
-                    showUpdateBanner();
-                }
-            })
-            .catch(err => console.log('Erro ao verificar updates.', err));
+======================================================== */
+const APP_VERSION = '1.0.0'; // ⚠️ MUDE ESTE NÚMERO A CADA PUSH
+
+(function() {
+  const VERSION_KEY = 'painel_criativo_version_v2';
+  
+  function checkUpdate() {
+    const saved = localStorage.getItem(VERSION_KEY);
+    if (saved !== APP_VERSION) {
+      showBanner();
+      localStorage.setItem(VERSION_KEY, APP_VERSION);
     }
+  }
 
-    function showUpdateBanner() {
-        if (document.getElementById('update-banner-popup')) return;
-        const banner = document.createElement('div');
-        banner.id = 'update-banner-popup';
-        banner.innerHTML = `
-            <div style="position: fixed; bottom: 20px; right: 20px; background: #e94560; color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 99999; cursor: pointer; font-weight: bold; font-family: Arial, sans-serif; animation: pulse 2s infinite;">
-                🔄 Nova atualização disponível!<br>
-                <small style="font-weight: normal;">Clique aqui para atualizar agora.</small>
-            </div>`;
-        document.body.appendChild(banner);
-        
-        if (!document.getElementById('banner-style')) {
-            const style = document.createElement('style');
-            style.id = 'banner-style';
-            style.textContent = `@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }`;
-            document.head.appendChild(style);
-        }
+  function showBanner() {
+    if (document.getElementById('update-banner-auto')) return;
+    
+    const banner = document.createElement('div');
+    banner.id = 'update-banner-auto';
+    banner.style.cssText = `
+      position: fixed; bottom: 24px; right: 24px; z-index: 99999;
+      background: linear-gradient(135deg, #e94560, #ff6b6b);
+      color: white; padding: 16px 24px; border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(233,69,96,0.4); cursor: pointer;
+      font-family: system-ui, -apple-system, sans-serif; 
+      font-weight: 600; font-size: 14px; line-height: 1.4;
+      animation: slideUp 0.4s ease-out;
+    `;
+    banner.innerHTML = `🔄 Nova versão disponível!<br><small style="opacity:0.8">Clique para atualizar</small>`;
+    
+    const style = document.createElement('style');
+    style.textContent = `@keyframes slideUp { from { transform: translateY(100%); opacity:0 } to { transform: translateY(0); opacity:1 } }`;
+    document.head.appendChild(style);
+    
+    banner.addEventListener('click', () => {
+      if (confirm('Atualizar agora? A página será recarregada com a nova versão.')) {
+        window.location.reload(true);
+      }
+    });
+    
+    document.body.appendChild(banner);
+  }
 
-        banner.addEventListener('click', () => window.location.reload(true));
-    }
-
-    checkForUpdates();
-    setInterval(checkForUpdates, 15000); // Verifica a cada 15 segundos
-    // ==========================================================
+  // Verifica ao carregar + a cada 30 segundos
+  checkUpdate();
+  setInterval(checkUpdate, 30000);
+})();
 </script>
 </body>
 </html>
