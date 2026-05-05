@@ -363,7 +363,7 @@ const DAY_NAMES = {1:'Segunda-feira',2:'Terça-feira',3:'Quarta-feira',4:'Quinta
 const DAY_SHORT = {1:'Segunda',2:'Terça',3:'Quarta',4:'Quinta',5:'Sexta'};
 
 const DEFAULTS = {
-  emp: 'MX - AR - US - AU - VN - PH - CL - CO - PE - FR - EG - GR - UK - CZ',
+  emp: 'MX - AR - US - AU - VN - PH - CL - CO - PE - FR - EG - GR - UK - CZ - AE',
   cc:  'BR - AR - MX - US - DE - JP - TR - AU - PH - BE - TH - CO - NL - PE - FR - UK - KR - CZ - GR - ID',
   escala: {1:'Luiza',2:'Pedro',3:'Leo',4:'Eduardo',5:'Ryan'}
 };
@@ -941,46 +941,77 @@ setInterval(async () => {
     loadAll();
   </script>
 
-  <!-- ====================== SISTEMA DE ATUALIZAÇÃO ====================== -->
+   <!-- ====================== SISTEMA DE ATUALIZAÇÃO (VERSÃO CORRIGIDA) ====================== -->
   <script>
-    var APP_VERSION = '1.0.2';   // ← AUMENTE SEMPRE QUE ALTERAR O CÓDIGO
+    const APP_VERSION = '1.0.2';        // ← AUMENTE este número toda vez que atualizar o app
 
-    function checarVersaoRemota() {
-      fetch('version.txt?t=' + Date.now(), { 
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' }
-      })
-      .then(function(response) { 
-        return response.text(); 
-      })
-      .then(function(texto) {
-        var vRemota = texto.trim();
-        if (vRemota && vRemota !== APP_VERSION) {
-          document.getElementById('banner-update').style.display = 'block';
-          document.getElementById('v-nova').innerText = vRemota;
-        }
-      })
-      .catch(function(e) { 
-        console.log('Erro ao verificar atualização:', e); 
+    (function() {
+      const STORAGE_KEY = 'last_accepted_version';
+      const VERSION_FILE = 'version.txt';
+
+      function getSavedVersion() {
+        return localStorage.getItem(STORAGE_KEY);
+      }
+
+      function saveVersion(version) {
+        localStorage.setItem(STORAGE_KEY, version);
+      }
+
+      function checarAtualizacao() {
+        fetch(VERSION_FILE + '?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        })
+        .then(r => r.text())
+        .then(texto => {
+          const versaoRemota = texto.trim();
+
+          const versaoSalva = getSavedVersion();
+
+          // Só mostra o banner se a versão remota for diferente da atual E diferente da última que o usuário aceitou
+          if (versaoRemota && versaoRemota !== APP_VERSION && versaoRemota !== versaoSalva) {
+            mostrarBanner(versaoRemota);
+          } else if (versaoRemota === APP_VERSION) {
+            // Se o usuário já está na versão mais recente, esconde o banner
+            const banner = document.getElementById('banner-update');
+            if (banner) banner.style.display = 'none';
+          }
+        })
+        .catch(() => {});
+      }
+
+      function mostrarBanner(versaoNova) {
+        const banner = document.getElementById('banner-update');
+        if (!banner) return;
+
+        banner.style.display = 'block';
+        document.getElementById('v-nova').innerText = versaoNova;
+
+        // Quando o usuário clicar no banner, salva a nova versão e recarrega
+        banner.onclick = function() {
+          if (confirm('Atualizar para a versão ' + versaoNova + '?')) {
+            saveVersion(versaoNova);           // memoriza que o usuário já atualizou
+            window.location.reload(true);
+          }
+        };
+      }
+
+      // Inicia as verificações
+      window.addEventListener('load', function() {
+        setTimeout(checarAtualizacao, 1000);
+        setInterval(checarAtualizacao, 25000);
       });
-    }
-
-    // Inicia a verificação
-    window.addEventListener('load', function() {
-      setTimeout(checarVersaoRemota, 1500);
-      setInterval(checarVersaoRemota, 30000);
-    });
+    })();
   </script>
 
   <!-- Banner de atualização -->
   <div id="banner-update" style="display:none; position:fixed; bottom:20px; right:20px; z-index:999999; 
-       background:linear-gradient(135deg,#e94560,#ff6b6b); color:white; padding:18px 24px; 
-       border-radius:12px; font-family:system-ui,sans-serif; box-shadow:0 10px 30px rgba(233,69,96,0.4); 
-       cursor:pointer; max-width:320px;" onclick="if(confirm('Atualizar agora?')) window.location.reload(true)">
+       background:linear-gradient(135deg,#e94560,#ff6b6b); color:white; padding:18px 26px; 
+       border-radius:12px; box-shadow:0 10px 30px rgba(233,69,96,0.5); cursor:pointer; 
+       font-family:system-ui,sans-serif; font-weight:600; line-height:1.4; max-width:340px;">
     🚀 Nova versão <span id="v-nova"></span> disponível!<br>
-    <small>Clique aqui para atualizar agora</small>
+    <small style="opacity:0.9">Clique aqui para atualizar agora</small>
   </div>
-  <!-- ====================== FIM DO SISTEMA ====================== -->
-
+  <!-- ====================== FIM DO SISTEMA DE ATUALIZAÇÃO ====================== -->
 </body>
 </html>
