@@ -936,38 +936,35 @@ setupCopyBtn('btn-copy-emp', 'emp-tags');
 
 // ── Init ──────────────────────────────────────────────────
 loadAll();
-<!-- FIM DO SEU CONTEÚDO EXISTENTE -->
-
+<!-- SISTEMA DE ATUALIZAÇÃO BLINDADO -->
 <script>
-  // SISTEMA DE ATUALIZAÇÃO - VERSÃO 1.0.1
-  const APP_VERSION = '1.0.1'; 
+  // 1. Definição da versão (Mude para 1.0.2 no próximo push)
+  var APP_VERSION = '1.0.1';
 
-  (function() {
-    function verificar() {
-      fetch('version.txt?t=' + Date.now(), { cache: 'no-store' })
-        .then(function(r) { return r.text(); })
-        .then(function(vRemote) {
-          var v = vRemote.trim();
-          if (v && v !== APP_VERSION) {
-            exibirAviso(v);
-          }
-        }).catch(function(){});
-    }
+  // 2. Função de Verificação
+  function checarVersaoRemota() {
+    fetch('version.txt?t=' + Date.now(), { cache: 'no-store' })
+      .then(function(response) { return response.text(); })
+      .then(function(texto) {
+        var vRemota = texto.trim();
+        if (vRemota && vRemota !== APP_VERSION) {
+          document.getElementById('banner-update').style.display = 'block';
+          document.getElementById('v-nova').innerText = vRemota;
+        }
+      })
+      .catch(function(e) { console.log('Erro update:', e); });
+  }
 
-    function exibirAviso(v) {
-      if (document.getElementById('upd-bar')) return;
-      var b = document.createElement('div');
-      b.id = 'upd-bar';
-      b.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#e94560;color:#fff;padding:15px;border-radius:10px;cursor:pointer;font-family:sans-serif;box-shadow:0 5px 15px rgba(0,0,0,0.3);';
-      b.innerHTML = '🚀 Nova versão ' + v + ' disponível!<br>Clique para carregar.';
-      b.onclick = function() { window.location.reload(true); };
-      document.body.appendChild(b);
-    }
-
-    verificar();
-    setInterval(verificar, 20000);
-  })();
+  // Iniciar verificação
+  setTimeout(checarVersaoRemota, 2000); // Checa 2 segundos após abrir
+  setInterval(checarVersaoRemota, 30000); // Checa a cada 30 segundos
 </script>
-</script>
+
+<!-- BANNER ESCONDIDO POR PADRÃO -->
+<div id="banner-update" style="display:none; position:fixed; bottom:20px; right:20px; z-index:9999; background:#e94560; color:white; padding:20px; border-radius:12px; font-family:sans-serif; box-shadow:0 10px 30px rgba(0,0,0,0.5); cursor:pointer;" onclick="window.location.reload(true)">
+  🚀 Nova versão <span id="v-nova"></span> disponível!<br>
+  <small>Clique aqui para atualizar agora</small>
+</div>
+<!-- FINAL DO SISTEMA -->
 </body>
 </html>
