@@ -917,34 +917,42 @@ setInterval(async () => {
   renderAll(); renderHistory(); renderEquipePanel();
 }, 30000);
 
-// ── Botões copiar países ──────────────────────────────────
-function setupCopyBtn(btnId, tagsId) {
-  document.getElementById(btnId).onclick = function() {
-    const tags = document.getElementById(tagsId).querySelectorAll('.tag');
-    if (!tags.length) return;
-    const text = Array.from(tags).map(t => t.childNodes[0].textContent.trim()).join(' - ');
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = this;
-      btn.textContent = '✓';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = '⎘'; btn.classList.remove('copied'); }, 1800);
-    });
-  };
-}
-setupCopyBtn('btn-copy-cc',  'cc-tags');
-setupCopyBtn('btn-copy-emp', 'emp-tags');
+ // ── Botões copiar países ──────────────────────────────────
+    function setupCopyBtn(btnId, tagsId) {
+      document.getElementById(btnId).onclick = function() {
+        const tags = document.getElementById(tagsId).querySelectorAll('.tag');
+        if (!tags.length) return;
+        const text = Array.from(tags).map(t => t.childNodes[0].textContent.trim()).join(' - ');
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = this;
+          btn.textContent = '✓';
+          btn.classList.add('copied');
+          setTimeout(() => { 
+            btn.textContent = '⎘'; 
+            btn.classList.remove('copied'); 
+          }, 1800);
+        });
+      };
+    }
+    setupCopyBtn('btn-copy-cc',  'cc-tags');
+    setupCopyBtn('btn-copy-emp', 'emp-tags');
 
-// ── Init ──────────────────────────────────────────────────
-loadAll();
-<!-- SISTEMA DE ATUALIZAÇÃO BLINDADO -->
-<script>
-  // 1. Definição da versão (Mude para 1.0.2 no próximo push)
-  var APP_VERSION = '1.0.1';
+    // ── Init ──────────────────────────────────────────────────
+    loadAll();
+  </script>
 
-  // 2. Função de Verificação
-  function checarVersaoRemota() {
-    fetch('version.txt?t=' + Date.now(), { cache: 'no-store' })
-      .then(function(response) { return response.text(); })
+  <!-- ====================== SISTEMA DE ATUALIZAÇÃO ====================== -->
+  <script>
+    var APP_VERSION = '1.0.2';   // ← AUMENTE SEMPRE QUE ALTERAR O CÓDIGO
+
+    function checarVersaoRemota() {
+      fetch('version.txt?t=' + Date.now(), { 
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
+      .then(function(response) { 
+        return response.text(); 
+      })
       .then(function(texto) {
         var vRemota = texto.trim();
         if (vRemota && vRemota !== APP_VERSION) {
@@ -952,19 +960,27 @@ loadAll();
           document.getElementById('v-nova').innerText = vRemota;
         }
       })
-      .catch(function(e) { console.log('Erro update:', e); });
-  }
+      .catch(function(e) { 
+        console.log('Erro ao verificar atualização:', e); 
+      });
+    }
 
-  // Iniciar verificação
-  setTimeout(checarVersaoRemota, 2000); // Checa 2 segundos após abrir
-  setInterval(checarVersaoRemota, 30000); // Checa a cada 30 segundos
-</script>
+    // Inicia a verificação
+    window.addEventListener('load', function() {
+      setTimeout(checarVersaoRemota, 1500);
+      setInterval(checarVersaoRemota, 30000);
+    });
+  </script>
 
-<!-- BANNER ESCONDIDO POR PADRÃO -->
-<div id="banner-update" style="display:none; position:fixed; bottom:20px; right:20px; z-index:9999; background:#e94560; color:white; padding:20px; border-radius:12px; font-family:sans-serif; box-shadow:0 10px 30px rgba(0,0,0,0.5); cursor:pointer;" onclick="window.location.reload(true)">
-  🚀 Nova versão <span id="v-nova"></span> disponível!<br>
-  <small>Clique aqui para atualizar agora</small>
-</div>
-<!-- FINAL DO SISTEMA -->
+  <!-- Banner de atualização -->
+  <div id="banner-update" style="display:none; position:fixed; bottom:20px; right:20px; z-index:999999; 
+       background:linear-gradient(135deg,#e94560,#ff6b6b); color:white; padding:18px 24px; 
+       border-radius:12px; font-family:system-ui,sans-serif; box-shadow:0 10px 30px rgba(233,69,96,0.4); 
+       cursor:pointer; max-width:320px;" onclick="if(confirm('Atualizar agora?')) window.location.reload(true)">
+    🚀 Nova versão <span id="v-nova"></span> disponível!<br>
+    <small>Clique aqui para atualizar agora</small>
+  </div>
+  <!-- ====================== FIM DO SISTEMA ====================== -->
+
 </body>
 </html>
