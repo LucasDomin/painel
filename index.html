@@ -295,6 +295,7 @@
 </div>
 
 <script>
+  const APP_VERSION = 2; 
 // ══════════════════════════════════════════════════════════
 // DADOS FIXOS
 // ══════════════════════════════════════════════════════════
@@ -936,6 +937,42 @@ setupCopyBtn('btn-copy-emp', 'emp-tags');
 
 // ── Init ──────────────────────────────────────────────────
 loadAll();
+ // ============ SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA ============
+    function checkForUpdates() {
+        fetch('version.json?_t=' + new Date().getTime())
+            .then(response => response.json())
+            .then(data => {
+                if (data.version > APP_VERSION) {
+                    showUpdateBanner();
+                }
+            })
+            .catch(err => console.log('Erro ao verificar updates.', err));
+    }
+
+    function showUpdateBanner() {
+        if (document.getElementById('update-banner-popup')) return;
+        const banner = document.createElement('div');
+        banner.id = 'update-banner-popup';
+        banner.innerHTML = `
+            <div style="position: fixed; bottom: 20px; right: 20px; background: #e94560; color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 99999; cursor: pointer; font-weight: bold; font-family: Arial, sans-serif; animation: pulse 2s infinite;">
+                🔄 Nova atualização disponível!<br>
+                <small style="font-weight: normal;">Clique aqui para atualizar agora.</small>
+            </div>`;
+        document.body.appendChild(banner);
+        
+        if (!document.getElementById('banner-style')) {
+            const style = document.createElement('style');
+            style.id = 'banner-style';
+            style.textContent = `@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }`;
+            document.head.appendChild(style);
+        }
+
+        banner.addEventListener('click', () => window.location.reload(true));
+    }
+
+    checkForUpdates();
+    setInterval(checkForUpdates, 15000); // Verifica a cada 15 segundos
+    // ==========================================================
 </script>
 </body>
 </html>
